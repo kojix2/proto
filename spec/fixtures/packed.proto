@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package packed;
+
+message Numbers {
+  repeated int32 values = 1;
+  repeated double scores = 2;
+  repeated bool flags = 3;
+  repeated fixed32 ids = 4;
+}

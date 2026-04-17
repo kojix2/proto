@@ -1,0 +1,17 @@
+name: proto
+version: 0.1.0
+
+authors:
+  - kojix2
+
+description: >
+  Modern protobuf runtime for Crystal.
+  IO-based encode/decode, unknown field preservation, generator support.
+
+targets:
+  protoc-gen-crystal:
+    main: src/protoc-gen-crystal_main.cr
+
+crystal: ">= 1.9.0"
+
+license: MIT
