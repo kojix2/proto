@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="crystal_docs.project_version" content="main">
+<meta name="crystal_docs.project_name" content="proto">
+
+
+
+<link href="../css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../js/doc.js"></script>
+
+  <meta name="repository-name" content="proto">
+  <title>Proto::EncodeError - proto main</title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "../";
+  </script>
+</head>
+<body>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill="currentColor" fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+<input type="checkbox" id="sidebar-btn">
+<label for="sidebar-btn" id="sidebar-btn-label">
+  <svg class="open" xmlns="http://www.w3.org/2000/svg" height="2em" width="2em" viewBox="0 0 512 512"><title>Open Sidebar</title><path fill="currentColor" d="M80 96v64h352V96H80zm0 112v64h352v-64H80zm0 112v64h352v-64H80z"></path></svg>
+  <svg class="close" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 512 512"><title>Close Sidebar</title><path fill="currentColor" d="m118.6 73.4-45.2 45.2L210.7 256 73.4 393.4l45.2 45.2L256 301.3l137.4 137.3 45.2-45.2L301.3 256l137.3-137.4-45.2-45.2L256 210.7Z"></path></svg>
+</label>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="../index.html">
+          proto
+        </a>
+      </h1>
+
+      <span class="project-version">
+        main
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class="parent open current" data-id="proto/Proto" data-name="proto">
+      <a href="../Proto.html">Proto</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="proto/Proto/Bootstrap" data-name="proto::bootstrap">
+      <a href="../Proto/Bootstrap.html">Bootstrap</a>
+      
+        <ul>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/CodeGeneratorRequest" data-name="proto::bootstrap::codegeneratorrequest">
+      <a href="../Proto/Bootstrap/CodeGeneratorRequest.html">CodeGeneratorRequest</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/CodeGeneratorResponse" data-name="proto::bootstrap::codegeneratorresponse">
+      <a href="../Proto/Bootstrap/CodeGeneratorResponse.html">CodeGeneratorResponse</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/CodeGeneratorResponseFile" data-name="proto::bootstrap::codegeneratorresponsefile">
+      <a href="../Proto/Bootstrap/CodeGeneratorResponseFile.html">CodeGeneratorResponseFile</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/DescriptorProto" data-name="proto::bootstrap::descriptorproto">
+      <a href="../Proto/Bootstrap/DescriptorProto.html">DescriptorProto</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/EnumDescriptorProto" data-name="proto::bootstrap::enumdescriptorproto">
+      <a href="../Proto/Bootstrap/EnumDescriptorProto.html">EnumDescriptorProto</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/EnumValueDescriptorProto" data-name="proto::bootstrap::enumvaluedescriptorproto">
+      <a href="../Proto/Bootstrap/EnumValueDescriptorProto.html">EnumValueDescriptorProto</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/FieldDescriptorProto" data-name="proto::bootstrap::fielddescriptorproto">
+      <a href="../Proto/Bootstrap/FieldDescriptorProto.html">FieldDescriptorProto</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/FieldLabel" data-name="proto::bootstrap::fieldlabel">
+      <a href="../Proto/Bootstrap/FieldLabel.html">FieldLabel</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/FieldType" data-name="proto::bootstrap::fieldtype">
+      <a href="../Proto/Bootstrap/FieldType.html">FieldType</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/FileDescriptorProto" data-name="proto::bootstrap::filedescriptorproto">
+      <a href="../Proto/Bootstrap/FileDescriptorProto.html">FileDescriptorProto</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/MessageOptions" data-name="proto::bootstrap::messageoptions">
+      <a href="../Proto/Bootstrap/MessageOptions.html">MessageOptions</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/MethodDescriptorProto" data-name="proto::bootstrap::methoddescriptorproto">
+      <a href="../Proto/Bootstrap/MethodDescriptorProto.html">MethodDescriptorProto</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/OneofDescriptorProto" data-name="proto::bootstrap::oneofdescriptorproto">
+      <a href="../Proto/Bootstrap/OneofDescriptorProto.html">OneofDescriptorProto</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/ServiceDescriptorProto" data-name="proto::bootstrap::servicedescriptorproto">
+      <a href="../Proto/Bootstrap/ServiceDescriptorProto.html">ServiceDescriptorProto</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/DecodeError" data-name="proto::decodeerror">
+      <a href="../Proto/DecodeError.html">DecodeError</a>
+      
+    </li>
+  
+  <li class=" current" data-id="proto/Proto/EncodeError" data-name="proto::encodeerror">
+      <a href="../Proto/EncodeError.html">EncodeError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Error" data-name="proto::error">
+      <a href="../Proto/Error.html">Error</a>
+      
+    </li>
+  
+  <li class="parent " data-id="proto/Proto/Generator" data-name="proto::generator">
+      <a href="../Proto/Generator.html">Generator</a>
+      
+        <ul>
+  
+  <li class=" " data-id="proto/Proto/Generator/CanonicalTypeNameResolver" data-name="proto::generator::canonicaltypenameresolver">
+      <a href="../Proto/Generator/CanonicalTypeNameResolver.html">CanonicalTypeNameResolver</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Generator/FileGenerator" data-name="proto::generator::filegenerator">
+      <a href="../Proto/Generator/FileGenerator.html">FileGenerator</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Generator/NamingPolicy" data-name="proto::generator::namingpolicy">
+      <a href="../Proto/Generator/NamingPolicy.html">NamingPolicy</a>
+      
+    </li>
+  
+  <li class="parent " data-id="proto/Proto/Generator/TypeIndex" data-name="proto::generator::typeindex">
+      <a href="../Proto/Generator/TypeIndex.html">TypeIndex</a>
+      
+        <ul>
+  
+  <li class=" " data-id="proto/Proto/Generator/TypeIndex/Entry" data-name="proto::generator::typeindex::entry">
+      <a href="../Proto/Generator/TypeIndex/Entry.html">Entry</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Generator/TypeIndex/Kind" data-name="proto::generator::typeindex::kind">
+      <a href="../Proto/Generator/TypeIndex/Kind.html">Kind</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Generator/TypeMapNameResolver" data-name="proto::generator::typemapnameresolver">
+      <a href="../Proto/Generator/TypeMapNameResolver.html">TypeMapNameResolver</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Generator/TypeNameResolver" data-name="proto::generator::typenameresolver">
+      <a href="../Proto/Generator/TypeNameResolver.html">TypeNameResolver</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/HasUnknownFields" data-name="proto::hasunknownfields">
+      <a href="../Proto/HasUnknownFields.html">HasUnknownFields</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Message" data-name="proto::message">
+      <a href="../Proto/Message.html">Message</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/OpenEnum" data-name="proto::openenum(t)">
+      <a href="../Proto/OpenEnum.html">OpenEnum</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/RequiredFieldError" data-name="proto::requiredfielderror">
+      <a href="../Proto/RequiredFieldError.html">RequiredFieldError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/UnknownField" data-name="proto::unknownfield">
+      <a href="../Proto/UnknownField.html">UnknownField</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/ValidationError" data-name="proto::validationerror">
+      <a href="../Proto/ValidationError.html">ValidationError</a>
+      
+    </li>
+  
+  <li class="parent " data-id="proto/Proto/Wire" data-name="proto::wire">
+      <a href="../Proto/Wire.html">Wire</a>
+      
+        <ul>
+  
+  <li class=" " data-id="proto/Proto/Wire/Reader" data-name="proto::wire::reader">
+      <a href="../Proto/Wire/Reader.html">Reader</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Wire/Writer" data-name="proto::wire::writer">
+      <a href="../Proto/Wire/Writer.html">Writer</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/WireType" data-name="proto::wiretype">
+      <a href="../Proto/WireType.html">WireType</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<h1 class="type-name">
+
+  <span class="kind">
+    class
+  </span> Proto::<wbr>EncodeError
+
+</h1>
+
+
+  <ul class="superclass-hierarchy"><li class="superclass"><a href="../Proto/EncodeError.html">Proto::EncodeError</a></li><li class="superclass"><a href="../Proto/Error.html">Proto::Error</a></li><li class="superclass">Exception</li><li class="superclass">Reference</li><li class="superclass">Object</li></ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>
+    <a id="defined-in" class="anchor" href="#defined-in">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Defined in:
+  </h2>
+  
+    
+      <a href="https://github.com/kojix2/proto/blob/358df44b22037e8ad5bc7eabf508d56e24804475/src/proto/error.cr#L8" target="_blank">
+        proto/error.cr
+      </a>
+    
+    <br/>
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+  <div class="methods-inherited">
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+  </div>
+
+  
+
+  
+
+  
+
+  
+
+
+</div>
+
+</body>
+</html>
