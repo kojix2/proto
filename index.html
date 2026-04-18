@@ -283,17 +283,10 @@
     <use href="#octicon-link"/>
   </svg>
 </a>proto.cr</h1>
+<p><a href="https://github.com/kojix2/proto/actions/workflows/test.yml"><img src="https://github.com/kojix2/proto/actions/workflows/test.yml/badge.svg" alt="Test" /></a>
+<a href="https://tokei.kojix2.net/github/kojix2/proto"><img src="https://img.shields.io/endpoint?url=https://tokei.kojix2.net/badge/github/kojix2/proto/lines" alt="Lines of Code" /></a></p>
 <p>protobuf runtime and protoc plugin for Crystal.
 This library was generated using an AI agent.</p>
-<ul>
-<li>IO-based encode/decode</li>
-<li>unknown field preservation</li>
-<li>strict / partial wire APIs for required-field workflows</li>
-<li>open enum support for proto3-style unknown enum values</li>
-<li>.pb.cr generation via protoc plugin</li>
-<li>service/rpc metadata generation</li>
-<li>extension metadata generation</li>
-</ul>
 <h2><a id="installation" class="anchor" href="#installation">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -418,17 +411,6 @@ partial child has_value?: false</code></pre>
   </svg>
 </a>Testing</h2>
 <pre><code class="language-sh">crystal spec</code></pre>
-<h2><a id="notes" class="anchor" href="#notes">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>Notes</h2>
-<ul>
-<li>gRPC service stubs are out of scope.</li>
-<li>Services are generated as RPC metadata.</li>
-<li>Extensions are generated as descriptor metadata, not as interpreted option logic.</li>
-<li>For gRPC support, use grpc.cr's protoc-gen-crystal-grpc.</li>
-</ul>
 </div>
 </body>
 </html>
