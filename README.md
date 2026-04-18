@@ -1,15 +1,10 @@
 # proto.cr
 
+[![Test](https://github.com/kojix2/proto/actions/workflows/test.yml/badge.svg)](https://github.com/kojix2/proto/actions/workflows/test.yml)
+[![Lines of Code](https://img.shields.io/endpoint?url=https%3A%2F%2Ftokei.kojix2.net%2Fbadge%2Fgithub%2Fkojix2%2Fproto%2Flines)](https://tokei.kojix2.net/github/kojix2/proto)
+
 protobuf runtime and protoc plugin for Crystal.
 This library was generated using an AI agent.
-
-- IO-based encode/decode
-- unknown field preservation
-- strict / partial wire APIs for required-field workflows
-- open enum support for proto3-style unknown enum values
-- .pb.cr generation via protoc plugin
-- service/rpc metadata generation
-- extension metadata generation
 
 ## Installation
 
@@ -161,10 +156,3 @@ end
 ```sh
 crystal spec
 ```
-
-## Notes
-
-- gRPC service stubs are out of scope.
-- Services are generated as RPC metadata.
-- Extensions are generated as descriptor metadata, not as interpreted option logic.
-- For gRPC support, use grpc.cr's protoc-gen-crystal-grpc.
