@@ -8,16 +8,6 @@ This library was generated using an AI agent.
 
 ## Installation
 
-### Shards (local path)
-
-```yaml
-dependencies:
-  proto:
-    path: ../proto.cr
-```
-
-### Shards (GitHub)
-
 ```yaml
 dependencies:
   proto:
@@ -27,7 +17,7 @@ dependencies:
 ## Build plugin
 
 ```sh
-crystal build src/protoc-gen-crystal_main.cr -o bin/protoc-gen-crystal
+shards build
 ```
 
 ## Generate .pb.cr
