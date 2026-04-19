@@ -590,6 +590,68 @@ describe Proto::Generator::FileGenerator do
     code.should_not contain("if (_v = ratings)")
   end
 
+  it "guards nil decode for message-valued map entries" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "message_map.proto"
+    file.package = "maptest"
+    file.syntax = "proto3"
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Settings"
+
+    value_message = Proto::Bootstrap::DescriptorProto.new
+    value_message.name = "FlagValue"
+
+    enabled = Proto::Bootstrap::FieldDescriptorProto.new
+    enabled.name = "enabled"
+    enabled.number = 1
+    enabled.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    enabled.type = Proto::Bootstrap::FieldType::TYPE_BOOL
+    value_message.field << enabled
+
+    entry = Proto::Bootstrap::DescriptorProto.new
+    entry.name = "FlagsEntry"
+    entry_options = Proto::Bootstrap::MessageOptions.new
+    entry_options.map_entry = true
+    entry.options = entry_options
+
+    key = Proto::Bootstrap::FieldDescriptorProto.new
+    key.name = "key"
+    key.number = 1
+    key.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    key.type = Proto::Bootstrap::FieldType::TYPE_STRING
+
+    value = Proto::Bootstrap::FieldDescriptorProto.new
+    value.name = "value"
+    value.number = 2
+    value.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    value.type = Proto::Bootstrap::FieldType::TYPE_MESSAGE
+    value.type_name = ".maptest.Settings.FlagValue"
+
+    entry.field << key << value
+    msg.nested_type << value_message
+    msg.nested_type << entry
+
+    map_field = Proto::Bootstrap::FieldDescriptorProto.new
+    map_field.name = "flags"
+    map_field.number = 1
+    map_field.label = Proto::Bootstrap::FieldLabel::LABEL_REPEATED
+    map_field.type = Proto::Bootstrap::FieldType::TYPE_MESSAGE
+    map_field.type_name = ".maptest.Settings.FlagsEntry"
+    msg.field << map_field
+
+    file.message_type << msg
+
+    index = Proto::Generator::TypeIndex.new([file])
+    gen = Proto::Generator::FileGenerator.new(file, index)
+    code = gen.generate
+
+    code.should contain("property flags : Hash(String, Maptest::Settings::FlagValue) = {} of String => Maptest::Settings::FlagValue")
+    code.should contain("entry = Maptest::Settings::FlagsEntry.decode_partial(reader.read_embedded)")
+    code.should contain("if value = entry.value")
+    code.should contain("msg.flags[entry.key] = value")
+  end
+
   it "does not treat repeated message as map unless map_entry option is true" do
     file = Proto::Bootstrap::FileDescriptorProto.new
     file.name = "not_map.proto"
@@ -1009,6 +1071,39 @@ describe Proto::Generator::FileGenerator do
     code.should contain("def clear_pos_inf : Nil")
     code.should contain("def pos_inf=(value : Float32) : Float32")
     code.should contain("if has_pos_inf?")
+  end
+
+  it "uses a Crystal-compatible proto3 non-default check for float and double" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "float_non_default.proto"
+    file.package = "flt"
+    file.syntax = "proto3"
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Sample"
+
+    ratio = Proto::Bootstrap::FieldDescriptorProto.new
+    ratio.name = "ratio"
+    ratio.number = 1
+    ratio.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    ratio.type = Proto::Bootstrap::FieldType::TYPE_FLOAT
+
+    gain = Proto::Bootstrap::FieldDescriptorProto.new
+    gain.name = "gain"
+    gain.number = 2
+    gain.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    gain.type = Proto::Bootstrap::FieldType::TYPE_DOUBLE
+
+    msg.field << ratio << gain
+    file.message_type << msg
+
+    index = Proto::Generator::TypeIndex.new([file])
+    gen = Proto::Generator::FileGenerator.new(file, index)
+    code = gen.generate
+
+    code.should contain("if !ratio.zero? || ratio.sign_bit < 0")
+    code.should contain("if !gain.zero? || gain.sign_bit < 0")
+    code.should_not contain("to_bits != 0")
   end
 
   it "fails fast when explicit integer defaults are out of range" do

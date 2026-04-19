@@ -441,11 +441,8 @@ module Proto
         repeated = field.label == Bootstrap::FieldLabel::LABEL_REPEATED
         type = field.type
 
-        if map_entry_descriptor_for(field)
-          emit_expected_wire_type_check(io, field.number, "Proto::WireType::LENGTH_DELIMITED", indent)
-          entry_type = resolve_type(field.type_name)
-          io << "#{indent}entry = #{entry_type}.decode_partial(reader.read_embedded)\n"
-          io << "#{indent}msg.#{fname}[entry.key] = entry.value\n"
+        if map_entry = map_entry_descriptor_for(field)
+          emit_map_field_decode(io, field, map_entry, fname, indent)
           return
         end
 
@@ -454,22 +451,7 @@ module Proto
         elsif type == Bootstrap::FieldType::TYPE_ENUM
           emit_enum_field_decode(io, field, repeated, indent)
         elsif repeated && PACKABLE_TYPES.includes?(type)
-          reader_method = SCALAR_READER_MAP[type]? || "read_uint64"
-          # Determine packed reader method
-          packed_reader = packed_reader_for(type)
-          unpacked_wire_type = SCALAR_WIRE_TYPE_MAP[type]? || "Proto::WireType::VARINT"
-          io << "#{indent}if wt == Proto::WireType::LENGTH_DELIMITED\n"
-          io << "#{indent}  reader.#{packed_reader} { |v| msg.#{fname} << #{packed_convert(type, "v")} }\n"
-          io << "#{indent}elsif wt == #{unpacked_wire_type}\n"
-          io << "#{indent}  msg.#{fname} << reader.#{reader_method}\n"
-          io << "#{indent}else\n"
-          emit_wire_type_mismatch(
-            io,
-            field.number,
-            "Proto::WireType::LENGTH_DELIMITED or #{unpacked_wire_type}",
-            indent + "  "
-          )
-          io << "#{indent}end\n"
+          emit_packed_repeated_field_decode(io, field, fname, type, indent)
         else
           expected_wire_type = SCALAR_WIRE_TYPE_MAP[type]? || "Proto::WireType::VARINT"
           emit_expected_wire_type_check(io, field.number, expected_wire_type, indent)
@@ -481,6 +463,38 @@ module Proto
             io << "#{indent}msg.#{fname} = #{reader_call}\n"
           end
         end
+      end
+
+      private def emit_map_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, map_entry : Bootstrap::DescriptorProto, fname : String, indent : String) : Nil
+        emit_expected_wire_type_check(io, field.number, "Proto::WireType::LENGTH_DELIMITED", indent)
+        entry_type = resolve_type(field.type_name)
+        value_field = map_entry.field.find { |field_desc| field_desc.name == "value" && field_desc.number == 2 }
+        io << "#{indent}entry = #{entry_type}.decode_partial(reader.read_embedded)\n"
+        if value_field && value_field.type == Bootstrap::FieldType::TYPE_MESSAGE
+          io << "#{indent}if value = entry.value\n"
+          io << "#{indent}  msg.#{fname}[entry.key] = value\n"
+          io << "#{indent}end\n"
+        else
+          io << "#{indent}msg.#{fname}[entry.key] = entry.value\n"
+        end
+      end
+
+      private def emit_packed_repeated_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, fname : String, type : Bootstrap::FieldType, indent : String) : Nil
+        reader_method = SCALAR_READER_MAP[type]? || "read_uint64"
+        packed_reader = packed_reader_for(type)
+        unpacked_wire_type = SCALAR_WIRE_TYPE_MAP[type]? || "Proto::WireType::VARINT"
+        io << "#{indent}if wt == Proto::WireType::LENGTH_DELIMITED\n"
+        io << "#{indent}  reader.#{packed_reader} { |v| msg.#{fname} << #{packed_convert(type, "v")} }\n"
+        io << "#{indent}elsif wt == #{unpacked_wire_type}\n"
+        io << "#{indent}  msg.#{fname} << reader.#{reader_method}\n"
+        io << "#{indent}else\n"
+        emit_wire_type_mismatch(
+          io,
+          field.number,
+          "Proto::WireType::LENGTH_DELIMITED or #{unpacked_wire_type}",
+          indent + "  "
+        )
+        io << "#{indent}end\n"
       end
 
       private def emit_message_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, repeated : Bool, indent : String) : Nil
@@ -1073,7 +1087,7 @@ module Proto
           value_expr
         when Bootstrap::FieldType::TYPE_FLOAT,
              Bootstrap::FieldType::TYPE_DOUBLE
-          "#{value_expr}.to_bits != 0"
+          "!#{value_expr}.zero? || #{value_expr}.sign_bit < 0"
         else
           "#{value_expr} != 0"
         end
