@@ -52,17 +52,36 @@ module Simple
         fn, wt = tag
         case fn
         when 1
+          unless wt == Proto::WireType::LENGTH_DELIMITED
+            raise Proto::DecodeError.new("wire type mismatch for field 1: expected Proto::WireType::LENGTH_DELIMITED, got " + wt.to_s)
+          end
           msg.name = reader.read_string
         when 2
+          unless wt == Proto::WireType::VARINT
+            raise Proto::DecodeError.new("wire type mismatch for field 2: expected Proto::WireType::VARINT, got " + wt.to_s)
+          end
           msg.age = reader.read_int32
         when 3
+          unless wt == Proto::WireType::VARINT
+            raise Proto::DecodeError.new("wire type mismatch for field 3: expected Proto::WireType::VARINT, got " + wt.to_s)
+          end
           msg.active = reader.read_bool
         when 4
-          _raw = reader.read_int32
+          unless wt == Proto::WireType::VARINT
+            raise Proto::DecodeError.new("wire type mismatch for field 4: expected Proto::WireType::VARINT, got " + wt.to_s)
+          end
+          _raw_u64 = reader.read_uint64
+          _raw = Proto::Wire::Reader.int32_from_varint(_raw_u64)
           msg.status = Proto::OpenEnum(Simple::Status).new(_raw)
         when 5
+          unless wt == Proto::WireType::LENGTH_DELIMITED
+            raise Proto::DecodeError.new("wire type mismatch for field 5: expected Proto::WireType::LENGTH_DELIMITED, got " + wt.to_s)
+          end
           msg.tags << reader.read_string
         when 6
+          unless wt == Proto::WireType::LENGTH_DELIMITED
+            raise Proto::DecodeError.new("wire type mismatch for field 6: expected Proto::WireType::LENGTH_DELIMITED, got " + wt.to_s)
+          end
           msg.address = Simple::Address.decode_partial(reader.read_embedded)
         else
           msg.capture_unknown_field(reader, fn, wt)
@@ -117,6 +136,7 @@ module Simple
       return false unless status == other.status
       return false unless tags == other.tags
       return false unless address == other.address
+      return false unless unknown_fields == other.unknown_fields
       true
     end
   end
@@ -133,8 +153,14 @@ module Simple
         fn, wt = tag
         case fn
         when 1
+          unless wt == Proto::WireType::LENGTH_DELIMITED
+            raise Proto::DecodeError.new("wire type mismatch for field 1: expected Proto::WireType::LENGTH_DELIMITED, got " + wt.to_s)
+          end
           msg.street = reader.read_string
         when 2
+          unless wt == Proto::WireType::LENGTH_DELIMITED
+            raise Proto::DecodeError.new("wire type mismatch for field 2: expected Proto::WireType::LENGTH_DELIMITED, got " + wt.to_s)
+          end
           msg.city = reader.read_string
         else
           msg.capture_unknown_field(reader, fn, wt)
@@ -168,6 +194,7 @@ module Simple
     def ==(other : self) : Bool
       return false unless street == other.street
       return false unless city == other.city
+      return false unless unknown_fields == other.unknown_fields
       true
     end
   end

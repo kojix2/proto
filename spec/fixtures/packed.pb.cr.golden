@@ -21,26 +21,34 @@ module Packed
         when 1
           if wt == Proto::WireType::LENGTH_DELIMITED
             reader.read_packed_varint { |v| msg.values << v.to_i32! }
-          else
+          elsif wt == Proto::WireType::VARINT
             msg.values << reader.read_int32
+          else
+            raise Proto::DecodeError.new("wire type mismatch for field 1: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::VARINT, got " + wt.to_s)
           end
         when 2
           if wt == Proto::WireType::LENGTH_DELIMITED
             reader.read_packed_double { |v| msg.scores << v }
-          else
+          elsif wt == Proto::WireType::FIXED64
             msg.scores << reader.read_double
+          else
+            raise Proto::DecodeError.new("wire type mismatch for field 2: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::FIXED64, got " + wt.to_s)
           end
         when 3
           if wt == Proto::WireType::LENGTH_DELIMITED
             reader.read_packed_varint { |v| msg.flags << v != 0_u64 }
-          else
+          elsif wt == Proto::WireType::VARINT
             msg.flags << reader.read_bool
+          else
+            raise Proto::DecodeError.new("wire type mismatch for field 3: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::VARINT, got " + wt.to_s)
           end
         when 4
           if wt == Proto::WireType::LENGTH_DELIMITED
             reader.read_packed_fixed32 { |v| msg.ids << v }
-          else
+          elsif wt == Proto::WireType::FIXED32
             msg.ids << reader.read_fixed32
+          else
+            raise Proto::DecodeError.new("wire type mismatch for field 4: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::FIXED32, got " + wt.to_s)
           end
         else
           msg.capture_unknown_field(reader, fn, wt)
@@ -84,6 +92,7 @@ module Packed
       return false unless scores == other.scores
       return false unless flags == other.flags
       return false unless ids == other.ids
+      return false unless unknown_fields == other.unknown_fields
       true
     end
   end

@@ -6,7 +6,18 @@ module Proto
     # clean EOF (end of message) and raises DecodeError on malformed input.
     # All other read methods raise DecodeError on unexpected EOF.
     struct Reader
-      def initialize(@io : IO)
+      MAX_FIELD_NUMBER         = 536_870_911
+      DEFAULT_MAX_MESSAGE_SIZE = 64_i64 * 1024 * 1024
+      DEFAULT_MAX_FIELD_LENGTH = 8_i32 * 1024 * 1024
+
+      @bytes_read : Int64
+
+      def initialize(
+        @io : IO,
+        @max_message_size : Int64 = DEFAULT_MAX_MESSAGE_SIZE,
+        @max_field_length : Int32 = DEFAULT_MAX_FIELD_LENGTH,
+      )
+        @bytes_read = 0_i64
       end
 
       # ---------------------------------------------------------------------------
@@ -18,14 +29,19 @@ module Proto
       def read_tag : {Int32, Int32}?
         v = read_varint? { return }
         wire_type = (v & 0x7_u64).to_i32
-        field_number = (v >> 3).to_i32
+        field_number = (v >> 3).to_i32!
         if field_number <= 0
           raise DecodeError.new("invalid field number: #{field_number}")
+        end
+        if field_number > MAX_FIELD_NUMBER
+          raise DecodeError.new("field number out of range: #{field_number}")
         end
         unless WireType.valid?(wire_type)
           raise DecodeError.new("invalid wire type: #{wire_type}")
         end
         {field_number, wire_type}
+      rescue OverflowError
+        raise DecodeError.new("field number out of range")
       end
 
       # ---------------------------------------------------------------------------
@@ -34,11 +50,11 @@ module Proto
 
       # int32 / int64 use sign-extended varint
       def read_int32 : Int32
-        read_varint.to_i32!
+        self.class.int32_from_varint(read_varint)
       end
 
       def read_int64 : Int64
-        read_varint.to_i64!
+        read_varint.unsafe_as(Int64)
       end
 
       # uint32 / uint64 use plain varint
@@ -70,27 +86,51 @@ module Proto
       # ---------------------------------------------------------------------------
 
       def read_fixed32 : UInt32
-        @io.read_bytes(UInt32, IO::ByteFormat::LittleEndian)
+        value = @io.read_bytes(UInt32, IO::ByteFormat::LittleEndian)
+        consume_bytes!(4)
+        value
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       def read_sfixed32 : Int32
-        @io.read_bytes(Int32, IO::ByteFormat::LittleEndian)
+        value = @io.read_bytes(Int32, IO::ByteFormat::LittleEndian)
+        consume_bytes!(4)
+        value
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       def read_fixed64 : UInt64
-        @io.read_bytes(UInt64, IO::ByteFormat::LittleEndian)
+        value = @io.read_bytes(UInt64, IO::ByteFormat::LittleEndian)
+        consume_bytes!(8)
+        value
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       def read_sfixed64 : Int64
-        @io.read_bytes(Int64, IO::ByteFormat::LittleEndian)
+        value = @io.read_bytes(Int64, IO::ByteFormat::LittleEndian)
+        consume_bytes!(8)
+        value
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       def read_float : Float32
-        @io.read_bytes(Float32, IO::ByteFormat::LittleEndian)
+        value = @io.read_bytes(Float32, IO::ByteFormat::LittleEndian)
+        consume_bytes!(4)
+        value
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       def read_double : Float64
-        @io.read_bytes(Float64, IO::ByteFormat::LittleEndian)
+        value = @io.read_bytes(Float64, IO::ByteFormat::LittleEndian)
+        consume_bytes!(8)
+        value
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       # ---------------------------------------------------------------------------
@@ -98,11 +138,13 @@ module Proto
       # ---------------------------------------------------------------------------
 
       def read_bytes : Bytes
-        len = read_varint.to_i32
-        raise DecodeError.new("negative length: #{len}") if len < 0
+        len = read_length
         slice = Bytes.new(len)
         @io.read_fully(slice)
+        consume_bytes!(len.to_i64)
         slice
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       def read_string : String
@@ -189,8 +231,9 @@ module Proto
           read_varint
         when WireType::FIXED64
           @io.skip(8)
+          consume_bytes!(8)
         when WireType::LENGTH_DELIMITED
-          @io.skip(read_varint.to_i32)
+          @io.skip(read_length)
         when WireType::START_GROUP
           loop do
             tag = read_tag || raise DecodeError.new("unexpected EOF inside group")
@@ -228,6 +271,7 @@ module Proto
             end
           end
           first = false
+          consume_bytes!(1)
           b = byte.to_u64
           result |= (b & 0x7F) << shift
           shift += 7
@@ -238,6 +282,35 @@ module Proto
 
       private def read_varint : UInt64
         read_varint? { raise DecodeError.new("unexpected EOF") }
+      end
+
+      private def read_length : Int32
+        len_u64 = read_varint
+        len = len_u64.to_i32!
+        if len > @max_field_length
+          raise DecodeError.new("field length exceeds limit: #{len} > #{@max_field_length}")
+        end
+        len
+      rescue OverflowError
+        raise DecodeError.new("length out of range: #{len_u64}")
+      end
+
+      private def consume_bytes!(count : Int64) : Nil
+        @bytes_read += count
+        if @bytes_read > @max_message_size
+          raise DecodeError.new("message exceeds max size: #{@bytes_read} > #{@max_message_size}")
+        end
+      end
+
+      def self.int32_from_varint(raw : UInt64) : Int32
+        upper = raw >> 32
+        if upper == 0_u64 || upper == 0xFFFF_FFFF_u64
+          raw.to_u32!.unsafe_as(Int32)
+        else
+          raise DecodeError.new("int32 out of range: #{raw}")
+        end
+      rescue OverflowError
+        raise DecodeError.new("int32 out of range: #{raw}")
       end
     end
   end

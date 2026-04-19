@@ -132,6 +132,7 @@ module Proto
           fname = field_identifier(field)
           io << "#{indent}  return false unless #{fname} == other.#{fname}\n"
         end
+        io << "#{indent}  return false unless unknown_fields == other.unknown_fields\n"
         io << "#{indent}  true\n"
         io << "#{indent}end\n"
       end

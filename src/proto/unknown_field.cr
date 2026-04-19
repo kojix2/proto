@@ -1,14 +1,15 @@
 module Proto
   alias ExtensionValue = Bool | Int32 | Int64 | UInt32 | UInt64 | Float32 | Float64 | String | Bytes
+  alias UnknownFieldData = Bytes | UInt64 | UInt32 | Array(UnknownField)
 
   # Holds one unknown field captured during message decoding.
   # Preserves wire_type so the field can be faithfully re-encoded.
   struct UnknownField
     getter field_number : Int32
     getter wire_type : Int32
-    getter data : Bytes | UInt64 | UInt32
+    getter data : UnknownFieldData
 
-    def initialize(@field_number : Int32, @wire_type : Int32, @data : Bytes | UInt64 | UInt32)
+    def initialize(@field_number : Int32, @wire_type : Int32, @data : UnknownFieldData)
     end
   end
 
@@ -68,6 +69,11 @@ module Proto
       when WireType::FIXED32
         v = reader.read_fixed32
         @unknown_fields << UnknownField.new(field_number, WireType::FIXED32, v)
+      when WireType::START_GROUP
+        nested = capture_unknown_group(reader)
+        @unknown_fields << UnknownField.new(field_number, WireType::START_GROUP, nested)
+      when WireType::END_GROUP
+        raise DecodeError.new("unexpected END_GROUP")
       else
         reader.skip_field(wire_type)
       end
@@ -87,6 +93,59 @@ module Proto
           writer.write_fixed32(d)
         when Bytes
           writer.write_bytes(d)
+        when Array(UnknownField)
+          write_unknown_group_fields(writer, d)
+          writer.write_tag(unknown_field.field_number, WireType::END_GROUP)
+        end
+      end
+    end
+
+    private def capture_unknown_group(reader : Wire::Reader) : Array(UnknownField)
+      fields = [] of UnknownField
+      while tag = reader.read_tag
+        fn, wt = tag
+        break if wt == WireType::END_GROUP
+        capture_unknown_field_into(fields, reader, fn, wt)
+      end
+      fields
+    end
+
+    private def capture_unknown_field_into(fields : Array(UnknownField), reader : Wire::Reader, field_number : Int32, wire_type : Int32) : Nil
+      case wire_type
+      when WireType::VARINT
+        fields << UnknownField.new(field_number, WireType::VARINT, reader.read_uint64)
+      when WireType::FIXED64
+        fields << UnknownField.new(field_number, WireType::FIXED64, reader.read_fixed64)
+      when WireType::LENGTH_DELIMITED
+        fields << UnknownField.new(field_number, WireType::LENGTH_DELIMITED, reader.read_bytes)
+      when WireType::FIXED32
+        fields << UnknownField.new(field_number, WireType::FIXED32, reader.read_fixed32)
+      when WireType::START_GROUP
+        fields << UnknownField.new(field_number, WireType::START_GROUP, capture_unknown_group(reader))
+      when WireType::END_GROUP
+        raise DecodeError.new("unexpected END_GROUP")
+      else
+        reader.skip_field(wire_type)
+      end
+    end
+
+    private def write_unknown_group_fields(writer : Wire::Writer, fields : Array(UnknownField)) : Nil
+      fields.each do |field|
+        writer.write_tag(field.field_number, field.wire_type)
+        case d = field.data
+        when UInt64
+          if field.wire_type == WireType::FIXED64
+            writer.write_fixed64(d)
+          else
+            writer.write_varint(d)
+          end
+        when UInt32
+          writer.write_fixed32(d)
+        when Bytes
+          writer.write_bytes(d)
+        when Array(UnknownField)
+          write_unknown_group_fields(writer, d)
+          writer.write_tag(field.field_number, WireType::END_GROUP)
         end
       end
     end

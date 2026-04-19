@@ -60,6 +60,21 @@ describe "Proto::Wire::Reader / Writer" do
     it "round-trips UInt64::MAX" do
       roundtrip_varint(UInt64::MAX).should eq UInt64::MAX
     end
+
+    it "raises on varint overflow" do
+      bytes = Bytes[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01]
+      reader = Proto::Wire::Reader.new(IO::Memory.new(bytes))
+      expect_raises(Proto::DecodeError, /varint overflow/) do
+        reader.read_uint64
+      end
+    end
+
+    it "raises on truncated varint" do
+      reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[0x80]))
+      expect_raises(Proto::DecodeError, /unexpected EOF in varint/) do
+        reader.read_uint64
+      end
+    end
   end
 
   describe "int32 (sign-extended varint)" do
@@ -204,6 +219,13 @@ describe "Proto::Wire::Reader / Writer" do
       io.rewind
       Proto::Wire::Reader.new(io).read_sfixed32.should eq Int32::MIN
     end
+
+    it "raises on truncated fixed32" do
+      reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[0xAA, 0xBB, 0xCC]))
+      expect_raises(Proto::DecodeError, /unexpected EOF/) do
+        reader.read_fixed32
+      end
+    end
   end
 
   describe "fixed64 / sfixed64" do
@@ -219,6 +241,13 @@ describe "Proto::Wire::Reader / Writer" do
       Proto::Wire::Writer.new(io).write_sfixed64(Int64::MIN)
       io.rewind
       Proto::Wire::Reader.new(io).read_sfixed64.should eq Int64::MIN
+    end
+
+    it "raises on truncated fixed64" do
+      reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[0x01, 0x02, 0x03, 0x04, 0x05]))
+      expect_raises(Proto::DecodeError, /unexpected EOF/) do
+        reader.read_fixed64
+      end
     end
   end
 
@@ -274,6 +303,14 @@ describe "Proto::Wire::Reader / Writer" do
       io.rewind
       Proto::Wire::Reader.new(io).read_string.should eq "こんにちは"
     end
+
+    it "raises on truncated length-delimited payload" do
+      # length prefix says 5 bytes, but only 2 bytes follow.
+      reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[0x05, 0x41, 0x42]))
+      expect_raises(Proto::DecodeError, /unexpected EOF/) do
+        reader.read_string
+      end
+    end
   end
 
   describe "read_tag" do
@@ -313,6 +350,14 @@ describe "Proto::Wire::Reader / Writer" do
       # tag = (1 << 3) | 7 = 0x0F (wire type 7 is invalid)
       reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[0x0F]))
       expect_raises(Proto::DecodeError, /invalid wire type/) do
+        reader.read_tag
+      end
+    end
+
+    it "raises for field number out of range" do
+      # tag = (536_870_912 << 3) | 0
+      reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[0x80, 0x80, 0x80, 0x80, 0x10]))
+      expect_raises(Proto::DecodeError, /field number out of range/) do
         reader.read_tag
       end
     end
@@ -581,6 +626,52 @@ describe "Proto::Wire::Reader / Writer" do
       end
       value.should eq 0xDEADBEEF_u32
     end
+
+    it "captures and re-encodes an unknown group field" do
+      io = IO::Memory.new
+      w = Proto::Wire::Writer.new(io)
+      w.write_tag(96, Proto::WireType::START_GROUP)
+      w.write_tag(1, Proto::WireType::VARINT)
+      w.write_uint64(77_u64)
+      w.write_tag(96, Proto::WireType::END_GROUP)
+
+      io.rewind
+      r = Proto::Wire::Reader.new(io)
+      mock_msg = Proto::HasUnknownFieldsCapture.new
+      while tag = r.read_tag
+        fn, wt = tag
+        mock_msg.capture_unknown_field(r, fn, wt)
+      end
+
+      mock_msg.unknown_fields.size.should eq 1
+      mock_msg.unknown_fields[0].field_number.should eq 96
+      mock_msg.unknown_fields[0].wire_type.should eq Proto::WireType::START_GROUP
+
+      re = IO::Memory.new
+      ow = Proto::Wire::Writer.new(re)
+      mock_msg.write_unknown_fields(ow)
+
+      re.rewind
+      rr = Proto::Wire::Reader.new(re)
+      first = rr.read_tag
+      first.should_not be_nil
+      first_tag = first.as({Int32, Int32})
+      first_tag[0].should eq 96
+      first_tag[1].should eq Proto::WireType::START_GROUP
+
+      nested = rr.read_tag
+      nested.should_not be_nil
+      nested_tag = nested.as({Int32, Int32})
+      nested_tag[0].should eq 1
+      nested_tag[1].should eq Proto::WireType::VARINT
+      rr.read_uint64.should eq 77_u64
+
+      group_end = rr.read_tag
+      group_end.should_not be_nil
+      end_tag = group_end.as({Int32, Int32})
+      end_tag[0].should eq 96
+      end_tag[1].should eq Proto::WireType::END_GROUP
+    end
   end
 
   describe "packed repeated" do
@@ -600,7 +691,7 @@ describe "Proto::Wire::Reader / Writer" do
       decoded_tag[0].should eq 1
       decoded_tag[1].should eq Proto::WireType::LENGTH_DELIMITED
       result = [] of Int32
-      r.read_packed_varint { |v| result << v.to_i32! }
+      r.read_packed_varint { |v| result << Proto::Wire::Reader.int32_from_varint(v) }
       result.should eq values
     end
 
@@ -647,6 +738,58 @@ describe "Proto::Wire::Reader / Writer" do
       w = Proto::Wire::Writer.new(io)
       w.write_packed(5) { |_buf| }
       io.size.should eq 0
+    end
+  end
+
+  describe "reader limits" do
+    it "raises when length-delimited payload exceeds max_field_length" do
+      io = IO::Memory.new
+      w = Proto::Wire::Writer.new(io)
+      w.write_string("abc")
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io, max_field_length: 2)
+      expect_raises(Proto::DecodeError, /field length exceeds limit/) do
+        reader.read_string
+      end
+    end
+
+    it "raises when total bytes exceed max_message_size" do
+      io = IO::Memory.new
+      w = Proto::Wire::Writer.new(io)
+      w.write_string("abcdef")
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io, max_message_size: 4)
+      expect_raises(Proto::DecodeError, /message exceeds max size/) do
+        reader.read_string
+      end
+    end
+  end
+
+  describe "writer limits" do
+    it "raises when bytes field exceeds max_field_length" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io, max_field_length: 2)
+      expect_raises(Proto::EncodeError, /field length exceeds limit/) do
+        writer.write_bytes(Bytes[0x01, 0x02, 0x03])
+      end
+    end
+
+    it "raises when embedded payload exceeds max_field_length" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io, max_field_length: 3)
+      expect_raises(Proto::EncodeError, /field length exceeds limit/) do
+        writer.write_embedded(1, &.write(Bytes[1, 2, 3, 4]))
+      end
+    end
+
+    it "raises when packed payload exceeds max_field_length" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io, max_field_length: 3)
+      expect_raises(Proto::EncodeError, /field length exceeds limit/) do
+        writer.write_packed(1, &.write(Bytes[1, 2, 3, 4]))
+      end
     end
   end
 end

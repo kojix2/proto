@@ -120,6 +120,31 @@ describe Proto::Generator::TypeNameResolver do
     end
   end
 
+  it "allows FileGenerator to resolve types via type_map resolver" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "mapped.proto"
+    file.package = "mypkg"
+    file.syntax = "proto3"
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Wrapper"
+    field = Proto::Bootstrap::FieldDescriptorProto.new
+    field.name = "payload"
+    field.number = 1
+    field.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    field.type = Proto::Bootstrap::FieldType::TYPE_MESSAGE
+    field.type_name = ".google.protobuf.Empty"
+    msg.field << field
+    file.message_type << msg
+
+    index = Proto::Generator::TypeIndex.new([file])
+    resolver = Proto::Generator::TypeMapNameResolver.new({".google.protobuf.Empty" => "Custom::Empty"})
+
+    code = Proto::Generator::FileGenerator.new(file, index, resolver).generate
+    code.should contain("property payload : Custom::Empty? = nil")
+    code.should contain("msg.payload = Custom::Empty.decode_partial(reader.read_embedded)")
+  end
+
   it "ignores unrelated parameters and surrounding whitespace while parsing type_map" do
     resolver = Proto::Generator::TypeNameResolver.build(
       " foo = bar , type_map = google.protobuf.Empty = My::Custom::Empty ; .mypkg.Reply = Reply ",
@@ -188,6 +213,68 @@ describe Proto::Generator::FileGenerator do
     generated.should contain("property alias_ : String")
     generated.should contain("msg.alias_ = reader.read_string")
     generated.should contain("if !alias_.empty?")
+  end
+
+  it "emits wire type guards for known fields during decode" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "wire_guard.proto"
+    file.package = "wireguard"
+    file.syntax = "proto3"
+
+    enum_desc = Proto::Bootstrap::EnumDescriptorProto.new
+    enum_desc.name = "State"
+    zero = Proto::Bootstrap::EnumValueDescriptorProto.new
+    zero.name = "STATE_UNKNOWN"
+    zero.number = 0
+    enum_desc.value << zero
+    file.enum_type << enum_desc
+
+    child = Proto::Bootstrap::DescriptorProto.new
+    child.name = "Child"
+    file.message_type << child
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Sample"
+
+    f1 = Proto::Bootstrap::FieldDescriptorProto.new
+    f1.name = "count"
+    f1.number = 1
+    f1.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    f1.type = Proto::Bootstrap::FieldType::TYPE_INT32
+
+    f2 = Proto::Bootstrap::FieldDescriptorProto.new
+    f2.name = "child"
+    f2.number = 2
+    f2.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    f2.type = Proto::Bootstrap::FieldType::TYPE_MESSAGE
+    f2.type_name = ".wireguard.Child"
+
+    f3 = Proto::Bootstrap::FieldDescriptorProto.new
+    f3.name = "values"
+    f3.number = 3
+    f3.label = Proto::Bootstrap::FieldLabel::LABEL_REPEATED
+    f3.type = Proto::Bootstrap::FieldType::TYPE_INT32
+
+    f4 = Proto::Bootstrap::FieldDescriptorProto.new
+    f4.name = "state"
+    f4.number = 4
+    f4.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    f4.type = Proto::Bootstrap::FieldType::TYPE_ENUM
+    f4.type_name = ".wireguard.State"
+
+    msg.field << f1 << f2 << f3 << f4
+    file.message_type << msg
+
+    index = Proto::Generator::TypeIndex.new([file])
+    code = Proto::Generator::FileGenerator.new(file, index).generate
+
+    code.should contain("unless wt == Proto::WireType::VARINT")
+    code.should contain("wire type mismatch for field 1: expected Proto::WireType::VARINT, got ")
+    code.should contain("unless wt == Proto::WireType::LENGTH_DELIMITED")
+    code.should contain("wire type mismatch for field 2: expected Proto::WireType::LENGTH_DELIMITED, got ")
+    code.should contain("elsif wt == Proto::WireType::VARINT")
+    code.should contain("wire type mismatch for field 3: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::VARINT, got ")
+    code.should contain("wire type mismatch for field 4: expected Proto::WireType::VARINT, got ")
   end
 
   it "normalizes lowercase enum member names to Crystal constants" do
@@ -924,6 +1011,64 @@ describe Proto::Generator::FileGenerator do
     code.should contain("if has_pos_inf?")
   end
 
+  it "fails fast when explicit integer defaults are out of range" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "bad_defaults.proto"
+    file.package = "defaults"
+    file.syntax = "proto2"
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Config"
+
+    bad = Proto::Bootstrap::FieldDescriptorProto.new
+    bad.name = "u32"
+    bad.number = 1
+    bad.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    bad.type = Proto::Bootstrap::FieldType::TYPE_UINT32
+    bad.default_value = "4294967296"
+    msg.field << bad
+    file.message_type << msg
+
+    index = Proto::Generator::TypeIndex.new([file])
+    gen = Proto::Generator::FileGenerator.new(file, index)
+
+    expect_raises(Exception, /out of range/) do
+      gen.generate
+    end
+  end
+
+  it "fails fast on normalized identifier collisions" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "collision.proto"
+    file.package = "collide"
+    file.syntax = "proto3"
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Sample"
+
+    a = Proto::Bootstrap::FieldDescriptorProto.new
+    a.name = "foo-bar"
+    a.number = 1
+    a.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    a.type = Proto::Bootstrap::FieldType::TYPE_INT32
+
+    b = Proto::Bootstrap::FieldDescriptorProto.new
+    b.name = "foo_bar"
+    b.number = 2
+    b.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    b.type = Proto::Bootstrap::FieldType::TYPE_INT32
+
+    msg.field << a << b
+    file.message_type << msg
+
+    index = Proto::Generator::TypeIndex.new([file])
+    gen = Proto::Generator::FileGenerator.new(file, index)
+
+    expect_raises(Exception, /identifier collision/) do
+      gen.generate
+    end
+  end
+
   it "elides regular proto3 scalar fields when value is default" do
     file = Proto::Bootstrap::FileDescriptorProto.new
     file.name = "plain_scalar.proto"
@@ -977,6 +1122,27 @@ describe Proto::Generator::FileGenerator do
     expect_raises(Exception, /TYPE_GROUP is not supported yet/) do
       gen.generate
     end
+  end
+
+  it "includes unknown_fields in generated equality" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "eq.proto"
+    file.package = "eq"
+    file.syntax = "proto3"
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Sample"
+    f = Proto::Bootstrap::FieldDescriptorProto.new
+    f.name = "count"
+    f.number = 1
+    f.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    f.type = Proto::Bootstrap::FieldType::TYPE_INT32
+    msg.field << f
+    file.message_type << msg
+
+    index = Proto::Generator::TypeIndex.new([file])
+    code = Proto::Generator::FileGenerator.new(file, index).generate
+    code.should contain("return false unless unknown_fields == other.unknown_fields")
   end
 
   it "generates service/rpc descriptors" do

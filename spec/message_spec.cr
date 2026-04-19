@@ -53,11 +53,12 @@ private class StrictEnumMessage
       fn, wt = tag
       case fn
       when 1
-        raw = reader.read_int32
+        raw_u64 = reader.read_uint64
+        raw = Proto::Wire::Reader.int32_from_varint(raw_u64)
         begin
           msg.mode = StrictMode.from_value(raw)
         rescue ArgumentError
-          msg.add_unknown_varint(fn, raw.to_u64!)
+          msg.add_unknown_varint(fn, raw_u64)
         end
       else
         msg.capture_unknown_field(reader, fn, wt)
@@ -388,6 +389,25 @@ describe Proto::Message do
       parsed = StrictEnumMessage.decode(IO::Memory.new(reencoded))
       parsed.unknown_fields.size.should eq(1)
       parsed.unknown_fields[0].data.should eq(123_u64)
+    end
+
+    it "keeps negative unknown enum values as raw unknown varints" do
+      io = IO::Memory.new
+      w = Proto::Wire::Writer.new(io)
+      w.write_tag(1, Proto::WireType::VARINT)
+      w.write_int32(-1)
+
+      decoded = StrictEnumMessage.decode(IO::Memory.new(io.to_slice))
+      decoded.mode.should eq(StrictMode::UNKNOWN)
+      decoded.unknown_fields.size.should eq(1)
+      decoded.unknown_fields[0].field_number.should eq(1)
+      decoded.unknown_fields[0].wire_type.should eq(Proto::WireType::VARINT)
+      decoded.unknown_fields[0].data.should eq(UInt64::MAX)
+
+      reencoded = decoded.encode
+      parsed = StrictEnumMessage.decode(IO::Memory.new(reencoded))
+      parsed.unknown_fields.size.should eq(1)
+      parsed.unknown_fields[0].data.should eq(UInt64::MAX)
     end
   end
 

@@ -107,6 +107,7 @@ module Proto
       def initialize(
         @file : Bootstrap::FileDescriptorProto,
         @index : TypeIndex,
+        @type_resolver : TypeNameResolver? = nil,
       )
       end
 
@@ -301,6 +302,7 @@ module Proto
 
       private def emit_message(io : IO, msg : Bootstrap::DescriptorProto, indent : String) : Nil
         validate_supported_field_types!(msg)
+        validate_identifier_collisions!(msg)
 
         io << "#{indent}class #{msg.name}\n"
         io << "#{indent}  include Proto::Message\n\n"
@@ -440,6 +442,7 @@ module Proto
         type = field.type
 
         if map_entry_descriptor_for(field)
+          emit_expected_wire_type_check(io, field.number, "Proto::WireType::LENGTH_DELIMITED", indent)
           entry_type = resolve_type(field.type_name)
           io << "#{indent}entry = #{entry_type}.decode_partial(reader.read_embedded)\n"
           io << "#{indent}msg.#{fname}[entry.key] = entry.value\n"
@@ -454,12 +457,22 @@ module Proto
           reader_method = SCALAR_READER_MAP[type]? || "read_uint64"
           # Determine packed reader method
           packed_reader = packed_reader_for(type)
+          unpacked_wire_type = SCALAR_WIRE_TYPE_MAP[type]? || "Proto::WireType::VARINT"
           io << "#{indent}if wt == Proto::WireType::LENGTH_DELIMITED\n"
           io << "#{indent}  reader.#{packed_reader} { |v| msg.#{fname} << #{packed_convert(type, "v")} }\n"
-          io << "#{indent}else\n"
+          io << "#{indent}elsif wt == #{unpacked_wire_type}\n"
           io << "#{indent}  msg.#{fname} << reader.#{reader_method}\n"
+          io << "#{indent}else\n"
+          emit_wire_type_mismatch(
+            io,
+            field.number,
+            "Proto::WireType::LENGTH_DELIMITED or #{unpacked_wire_type}",
+            indent + "  "
+          )
           io << "#{indent}end\n"
         else
+          expected_wire_type = SCALAR_WIRE_TYPE_MAP[type]? || "Proto::WireType::VARINT"
+          emit_expected_wire_type_check(io, field.number, expected_wire_type, indent)
           reader_method = SCALAR_READER_MAP[type]? || "read_uint64"
           reader_call = "reader.#{reader_method}"
           if repeated
@@ -473,6 +486,7 @@ module Proto
       private def emit_message_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, repeated : Bool, indent : String) : Nil
         fname = field_identifier(field)
         crystal_type = resolve_type(field.type_name)
+        emit_expected_wire_type_check(io, field.number, "Proto::WireType::LENGTH_DELIMITED", indent)
         if repeated
           io << "#{indent}msg.#{fname} << #{crystal_type}.decode_partial(reader.read_embedded)\n"
         else
@@ -487,39 +501,59 @@ module Proto
           io << "#{indent}if wt == Proto::WireType::LENGTH_DELIMITED\n"
           io << "#{indent}  reader.read_packed_varint do |v|\n"
           if open_enum_field?(field)
-            io << "#{indent}    msg.#{fname} << #{open_enum_type_for(field)}.new(v.to_i32!)\n"
+            io << "#{indent}    msg.#{fname} << #{open_enum_type_for(field)}.new(Proto::Wire::Reader.int32_from_varint(v))\n"
           else
             io << "#{indent}    begin\n"
-            io << "#{indent}      msg.#{fname} << #{crystal_type}.from_value(v.to_i32!)\n"
+            io << "#{indent}      msg.#{fname} << #{crystal_type}.from_value(Proto::Wire::Reader.int32_from_varint(v))\n"
             io << "#{indent}    rescue ArgumentError\n"
             io << "#{indent}      msg.add_unknown_varint(fn, v)\n"
             io << "#{indent}    end\n"
           end
           io << "#{indent}  end\n"
-          io << "#{indent}else\n"
-          io << "#{indent}  _raw = reader.read_int32\n"
+          io << "#{indent}elsif wt == Proto::WireType::VARINT\n"
+          io << "#{indent}  _raw_u64 = reader.read_uint64\n"
+          io << "#{indent}  _raw = Proto::Wire::Reader.int32_from_varint(_raw_u64)\n"
           if open_enum_field?(field)
             io << "#{indent}  msg.#{fname} << #{open_enum_type_for(field)}.new(_raw)\n"
           else
             io << "#{indent}  begin\n"
             io << "#{indent}    msg.#{fname} << #{crystal_type}.from_value(_raw)\n"
             io << "#{indent}  rescue ArgumentError\n"
-            io << "#{indent}    msg.add_unknown_varint(fn, _raw.to_u64!)\n"
+            io << "#{indent}    msg.add_unknown_varint(fn, _raw_u64)\n"
             io << "#{indent}  end\n"
           end
+          io << "#{indent}else\n"
+          emit_wire_type_mismatch(
+            io,
+            field.number,
+            "Proto::WireType::LENGTH_DELIMITED or Proto::WireType::VARINT",
+            indent + "  "
+          )
           io << "#{indent}end\n"
         else
-          io << "#{indent}_raw = reader.read_int32\n"
+          emit_expected_wire_type_check(io, field.number, "Proto::WireType::VARINT", indent)
+          io << "#{indent}_raw_u64 = reader.read_uint64\n"
+          io << "#{indent}_raw = Proto::Wire::Reader.int32_from_varint(_raw_u64)\n"
           if open_enum_field?(field)
             io << "#{indent}msg.#{fname} = #{open_enum_type_for(field)}.new(_raw)\n"
           else
             io << "#{indent}begin\n"
             io << "#{indent}  msg.#{fname} = #{crystal_type}.from_value(_raw)\n"
             io << "#{indent}rescue ArgumentError\n"
-            io << "#{indent}  msg.add_unknown_varint(fn, _raw.to_u64!)\n"
+            io << "#{indent}  msg.add_unknown_varint(fn, _raw_u64)\n"
             io << "#{indent}end\n"
           end
         end
+      end
+
+      private def emit_expected_wire_type_check(io : IO, field_number : Int32, expected_wire_type : String, indent : String) : Nil
+        io << "#{indent}unless wt == #{expected_wire_type}\n"
+        emit_wire_type_mismatch(io, field_number, expected_wire_type, indent + "  ")
+        io << "#{indent}end\n"
+      end
+
+      private def emit_wire_type_mismatch(io : IO, field_number : Int32, expected : String, indent : String) : Nil
+        io << "#{indent}raise Proto::DecodeError.new(\"wire type mismatch for field #{field_number}: expected #{expected}, got \" + wt.to_s)\n"
       end
 
       # Returns the packed reader method name for a packable scalar type.
@@ -785,17 +819,27 @@ module Proto
           float_default_literal(default_text, "f32")
         when Bootstrap::FieldType::TYPE_DOUBLE
           float_default_literal(default_text, "f64")
+        else
+          integer_default_literal_for(field.type, default_text)
+        end
+      end
+
+      private def integer_default_literal_for(type : Bootstrap::FieldType, value : String) : String?
+        case type
         when Bootstrap::FieldType::TYPE_INT32,
              Bootstrap::FieldType::TYPE_SINT32,
-             Bootstrap::FieldType::TYPE_SFIXED32,
-             Bootstrap::FieldType::TYPE_INT64,
+             Bootstrap::FieldType::TYPE_SFIXED32
+          integer_default_literal(value, "Int32")
+        when Bootstrap::FieldType::TYPE_INT64,
              Bootstrap::FieldType::TYPE_SINT64,
-             Bootstrap::FieldType::TYPE_SFIXED64,
-             Bootstrap::FieldType::TYPE_UINT32,
-             Bootstrap::FieldType::TYPE_FIXED32,
-             Bootstrap::FieldType::TYPE_UINT64,
+             Bootstrap::FieldType::TYPE_SFIXED64
+          integer_default_literal(value, "Int64")
+        when Bootstrap::FieldType::TYPE_UINT32,
+             Bootstrap::FieldType::TYPE_FIXED32
+          integer_default_literal(value, "UInt32")
+        when Bootstrap::FieldType::TYPE_UINT64,
              Bootstrap::FieldType::TYPE_FIXED64
-          default_text
+          integer_default_literal(value, "UInt64")
         end
       end
 
@@ -808,8 +852,50 @@ module Proto
         when "nan"
           "Float#{suffix == "f32" ? "32" : "64"}::NAN"
         else
+          if suffix == "f32"
+            value.to_f32
+          else
+            value.to_f64
+          end
           "#{value}_#{suffix}"
         end
+      rescue ArgumentError
+        raise "invalid float default literal '#{value}'"
+      rescue OverflowError
+        raise "float default literal out of range '#{value}'"
+      end
+
+      private def integer_default_literal(value : String, kind : String) : String
+        case kind
+        when "Int32"
+          parsed = value.to_i128
+          if parsed < Int32::MIN || parsed > Int32::MAX
+            raise "Int32 default literal out of range '#{value}'"
+          end
+          parsed.to_i32.to_s
+        when "Int64"
+          parsed = value.to_i128
+          if parsed < Int64::MIN || parsed > Int64::MAX
+            raise "Int64 default literal out of range '#{value}'"
+          end
+          parsed.to_i64.to_s
+        when "UInt32"
+          parsed = value.to_u128
+          if parsed > UInt32::MAX
+            raise "UInt32 default literal out of range '#{value}'"
+          end
+          parsed.to_u32.to_s
+        when "UInt64"
+          parsed = value.to_u128
+          if parsed > UInt64::MAX
+            raise "UInt64 default literal out of range '#{value}'"
+          end
+          parsed.to_u64.to_s
+        else
+          raise "unsupported integer default kind: #{kind}"
+        end
+      rescue ArgumentError
+        raise "invalid #{kind} default literal '#{value}'"
       end
 
       private def base_crystal_type(field : Bootstrap::FieldDescriptorProto) : String
@@ -824,10 +910,49 @@ module Proto
       end
 
       private def resolve_type(type_name : String) : String
+        if resolver = @type_resolver
+          return resolver.resolve(type_name, @file.package)
+        end
         entry = @index.resolve(type_name)
         return entry.crystal_name if entry
         # Fallback: strip leading dot and convert dots to ::
         NamingPolicy.fq_type_to_crystal(type_name)
+      end
+
+      private def validate_identifier_collisions!(msg : Bootstrap::DescriptorProto) : Nil
+        seen = Hash(String, String).new
+
+        register_name = ->(name : String, detail : String) do
+          if other = seen[name]?
+            raise "identifier collision in #{msg.name}: '#{name}' (#{other} vs #{detail})"
+          end
+          seen[name] = detail
+        end
+
+        msg.field.each do |field|
+          register_name.call(field_identifier(field), "field #{field.name}")
+          register_name.call(field_clear_method_name(field), "clear helper for #{field.name}")
+          if tracked_presence_field?(field) || derived_presence_field?(field)
+            register_name.call(field_presence_identifier(field), "presence helper for #{field.name}")
+          end
+        end
+
+        msg.oneof_decl.each_with_index do |oneof_desc, idx|
+          next if synthetic_oneof?(msg, idx)
+          register_name.call(oneof_case_prop_name(oneof_desc.name), "oneof case property #{oneof_desc.name}")
+          register_name.call(oneof_clear_method_name(oneof_desc.name), "oneof clear helper #{oneof_desc.name}")
+        end
+
+        msg.enum_type.each do |enum_desc|
+          enum_seen = Set(String).new
+          enum_desc.value.each do |value|
+            normalized = enum_member_name(value.name)
+            if enum_seen.includes?(normalized)
+              raise "enum member collision in #{msg.name}.#{enum_desc.name}: '#{normalized}'"
+            end
+            enum_seen.add(normalized)
+          end
+        end
       end
 
       private def map_entry_descriptor_for(field : Bootstrap::FieldDescriptorProto) : Bootstrap::DescriptorProto?

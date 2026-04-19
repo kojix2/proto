@@ -9,7 +9,9 @@ module Proto
     # For embedded messages use write_embedded which buffers the sub-message,
     # then writes the length prefix followed by the bytes.
     struct Writer
-      def initialize(@io : IO)
+      DEFAULT_MAX_FIELD_LENGTH = 8_i32 * 1024 * 1024
+
+      def initialize(@io : IO, @max_field_length : Int32 = DEFAULT_MAX_FIELD_LENGTH)
       end
 
       # ---------------------------------------------------------------------------
@@ -93,6 +95,7 @@ module Proto
       # ---------------------------------------------------------------------------
 
       def write_bytes(data : Bytes) : Nil
+        validate_field_length!(data.size)
         write_varint(data.size.to_u64)
         @io.write(data)
       end
@@ -106,6 +109,7 @@ module Proto
       def write_embedded(field_number : Int32, & : IO ->) : Nil
         buf = IO::Memory.new
         yield buf
+        validate_field_length!(buf.size)
         data = buf.to_slice
         write_tag(field_number, WireType::LENGTH_DELIMITED)
         write_bytes(data)
@@ -121,6 +125,7 @@ module Proto
         buf = IO::Memory.new
         yield buf
         return if buf.size == 0
+        validate_field_length!(buf.size)
         write_tag(field_number, WireType::LENGTH_DELIMITED)
         write_bytes(buf.to_slice)
       end
@@ -194,6 +199,12 @@ module Proto
       private def validate_wire_type!(wire_type : Int32) : Nil
         unless WireType.valid?(wire_type)
           raise EncodeError.new("invalid wire type: #{wire_type}")
+        end
+      end
+
+      private def validate_field_length!(length : Int) : Nil
+        if length > @max_field_length
+          raise EncodeError.new("field length exceeds limit: #{length} > #{@max_field_length}")
         end
       end
     end
