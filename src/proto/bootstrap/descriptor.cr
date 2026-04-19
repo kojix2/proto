@@ -60,6 +60,25 @@ module Proto
       TYPE_SINT64   = 18
     end
 
+    class FieldOptions
+      include HasUnknownFields
+
+      def self.decode(io : IO) : self
+        msg = new
+        reader = Wire::Reader.new(io)
+        while tag = reader.read_tag
+          fn, wt = tag
+          msg.capture_unknown_field(reader, fn, wt)
+        end
+        msg
+      end
+
+      def encode(io : IO) : Nil
+        w = Wire::Writer.new(io)
+        write_unknown_fields(w)
+      end
+    end
+
     class FieldDescriptorProto
       include HasUnknownFields
 
@@ -70,10 +89,12 @@ module Proto
       property type : FieldType = FieldType::TYPE_STRING
       property type_name : String = ""
       property default_value : String = ""
+      property options : FieldOptions? = nil
       property oneof_index : Int32? = nil
       property json_name : String = ""
       property? proto3_optional : Bool = false
 
+      # ameba:disable Metrics/CyclomaticComplexity
       def self.decode(io : IO) : self
         msg = new
         reader = Wire::Reader.new(io)
@@ -87,6 +108,7 @@ module Proto
           when  5 then msg.type = FieldType.from_value(reader.read_int32)
           when  6 then msg.type_name = reader.read_string
           when  7 then msg.default_value = reader.read_string
+          when  8 then msg.options = FieldOptions.decode(reader.read_embedded)
           when  9 then msg.oneof_index = reader.read_int32
           when 10 then msg.json_name = reader.read_string
           when 17 then msg.proto3_optional = reader.read_bool
@@ -95,6 +117,8 @@ module Proto
         end
         msg
       end
+
+      # ameba:enable Metrics/CyclomaticComplexity
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
@@ -107,6 +131,9 @@ module Proto
         w.write_int32(type.value)
         w.write_string_field(6, type_name)
         w.write_string_field(7, default_value)
+        if opts = options
+          w.write_embedded(8) { |sub| opts.encode(sub) }
+        end
         if oi = oneof_index
           w.write_tag(9, WireType::VARINT)
           w.write_int32(oi)
@@ -292,12 +319,32 @@ module Proto
     # MethodDescriptorProto
     # -------------------------------------------------------------------------
 
+    class MethodOptions
+      include HasUnknownFields
+
+      def self.decode(io : IO) : self
+        msg = new
+        reader = Wire::Reader.new(io)
+        while tag = reader.read_tag
+          fn, wt = tag
+          msg.capture_unknown_field(reader, fn, wt)
+        end
+        msg
+      end
+
+      def encode(io : IO) : Nil
+        w = Wire::Writer.new(io)
+        write_unknown_fields(w)
+      end
+    end
+
     class MethodDescriptorProto
       include HasUnknownFields
 
       property name : String = ""
       property input_type : String = ""
       property output_type : String = ""
+      property options : MethodOptions? = nil
       property? client_streaming : Bool = false
       property? server_streaming : Bool = false
 
@@ -310,6 +357,7 @@ module Proto
           when 1 then msg.name = reader.read_string
           when 2 then msg.input_type = reader.read_string
           when 3 then msg.output_type = reader.read_string
+          when 4 then msg.options = MethodOptions.decode(reader.read_embedded)
           when 5 then msg.client_streaming = reader.read_bool
           when 6 then msg.server_streaming = reader.read_bool
           else        msg.capture_unknown_field(reader, fn, wt)
@@ -323,6 +371,9 @@ module Proto
         w.write_string_field(1, name)
         w.write_string_field(2, input_type)
         w.write_string_field(3, output_type)
+        if opts = options
+          w.write_embedded(4) { |sub| opts.encode(sub) }
+        end
         w.write_bool_field(5, client_streaming?)
         w.write_bool_field(6, server_streaming?)
         write_unknown_fields(w)

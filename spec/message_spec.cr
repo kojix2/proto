@@ -391,6 +391,54 @@ describe Proto::Message do
     end
   end
 
+  describe "extension access helpers" do
+    it "reads a bool extension from unknown varint fields" do
+      msg = PingMessage.new
+      msg.add_unknown_varint(50_001, 1_u64)
+
+      extension = Proto::Bootstrap::FieldDescriptorProto.new
+      extension.number = 50_001
+      extension.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+      extension.type = Proto::Bootstrap::FieldType::TYPE_BOOL
+
+      msg.has_extension?(extension).should be_true
+      msg.extension_value?(extension).should be_true
+    end
+
+    it "returns repeated extension values in wire order" do
+      msg = PingMessage.new
+      msg.add_unknown_varint(50_002, 10_u64)
+      msg.add_unknown_varint(50_002, 20_u64)
+
+      extension = Proto::Bootstrap::FieldDescriptorProto.new
+      extension.number = 50_002
+      extension.label = Proto::Bootstrap::FieldLabel::LABEL_REPEATED
+      extension.type = Proto::Bootstrap::FieldType::TYPE_INT32
+
+      values = msg.extension_values(extension)
+      values.size.should eq(2)
+      values[0].should eq(10)
+      values[1].should eq(20)
+      msg.extension_value?(extension).should eq(20)
+    end
+
+    it "reads string extensions from length-delimited unknown fields" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_tag(50_003, Proto::WireType::LENGTH_DELIMITED)
+      writer.write_string("demo")
+
+      msg = PingMessage.decode(io.to_slice)
+      extension = Proto::Bootstrap::FieldDescriptorProto.new
+      extension.number = 50_003
+      extension.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+      extension.type = Proto::Bootstrap::FieldType::TYPE_STRING
+
+      msg.has_extension?(extension).should be_true
+      msg.extension_value?(extension).should eq("demo")
+    end
+  end
+
   describe "required field presence" do
     it "distinguishes unset from explicit default" do
       msg = RequiredScalarMessage.new

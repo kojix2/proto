@@ -132,6 +132,33 @@ describe "Proto::Bootstrap" do
       decoded.oneof_index.should eq 0
       decoded.proto3_optional?.should be_true
     end
+
+    it "round-trips field options unknown extension values" do
+      original = Proto::Bootstrap::FieldDescriptorProto.new
+      original.name = "flag"
+
+      options = Proto::Bootstrap::FieldOptions.new
+      options.add_unknown_varint(50_001, 1_u64)
+      original.options = options
+
+      io = IO::Memory.new
+      original.encode(io)
+      io.rewind
+      decoded = Proto::Bootstrap::FieldDescriptorProto.decode(io)
+
+      decoded.options.should_not be_nil
+      extension = Proto::Bootstrap::FieldDescriptorProto.new
+      extension.number = 50_001
+      extension.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+      extension.type = Proto::Bootstrap::FieldType::TYPE_BOOL
+
+      if decoded_options = decoded.options
+        decoded_options.has_extension?(extension).should be_true
+        decoded_options.extension_value?(extension).should be_true
+      else
+        fail "expected options to be present"
+      end
+    end
   end
 
   describe "DescriptorProto nested_type" do
@@ -201,6 +228,33 @@ describe "Proto::Bootstrap" do
       dm.output_type.should eq ".helloworld.ChatReply"
       dm.client_streaming?.should be_true
       dm.server_streaming?.should be_true
+    end
+
+    it "round-trips method options unknown extension values" do
+      method = Proto::Bootstrap::MethodDescriptorProto.new
+      method.name = "Run"
+
+      options = Proto::Bootstrap::MethodOptions.new
+      options.add_unknown_varint(50_003, 1_u64)
+      method.options = options
+
+      io = IO::Memory.new
+      method.encode(io)
+      io.rewind
+      decoded = Proto::Bootstrap::MethodDescriptorProto.decode(io)
+
+      decoded.options.should_not be_nil
+      extension = Proto::Bootstrap::FieldDescriptorProto.new
+      extension.number = 50_003
+      extension.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+      extension.type = Proto::Bootstrap::FieldType::TYPE_BOOL
+
+      if decoded_options = decoded.options
+        decoded_options.has_extension?(extension).should be_true
+        decoded_options.extension_value?(extension).should be_true
+      else
+        fail "expected method options to be present"
+      end
     end
   end
 
