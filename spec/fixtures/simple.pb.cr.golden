@@ -14,8 +14,6 @@ module Simple
       when 0 then STATUS_UNKNOWN
       when 1 then STATUS_OK
       when 2 then STATUS_ERROR
-      else
-        nil
       end
     end
   end
@@ -101,7 +99,7 @@ module Simple
         w.write_tag(5, Proto::WireType::LENGTH_DELIMITED)
         w.write_string(item)
       end
-      if (_v = address)
+      if _v = address
         w.write_embedded(6) { |sub| _v.encode_partial(sub) }
       end
       write_unknown_fields(w)

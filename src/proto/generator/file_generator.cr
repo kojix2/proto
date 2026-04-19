@@ -279,8 +279,6 @@ module Proto
           seen_numbers.add(v.number)
           io << "#{indent}    when #{v.number} then #{enum_member_name(v.name)}\n"
         end
-        io << "#{indent}    else\n"
-        io << "#{indent}      nil\n"
         io << "#{indent}    end\n"
         io << "#{indent}  end\n"
         io << "#{indent}end\n\n"
@@ -630,7 +628,7 @@ module Proto
             io << "#{indent}  w.write_embedded(#{num}) { |sub| item.encode_partial(sub) }\n"
             io << "#{indent}end\n"
           else
-            io << "#{indent}if (_v = #{fname})\n"
+            io << "#{indent}if _v = #{fname}\n"
             io << "#{indent}  w.write_embedded(#{num}) { |sub| _v.encode_partial(sub) }\n"
             io << "#{indent}end\n"
           end
@@ -875,7 +873,7 @@ module Proto
         fname = field_identifier(field)
         type = field.type
         num = field.number
-        io << "#{indent}if (_v = #{fname})\n"
+        io << "#{indent}if _v = #{fname}\n"
         if type == Bootstrap::FieldType::TYPE_MESSAGE
           io << "#{indent}  w.write_embedded(#{num}) { |sub| _v.encode_partial(sub) }\n"
         elsif type == Bootstrap::FieldType::TYPE_ENUM

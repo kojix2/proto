@@ -587,7 +587,7 @@ describe Proto::Generator::FileGenerator do
     code.should_not contain("_CountCase")
     code.should_not contain("count_case")
     # encode should guard with nil check
-    code.should contain("if (_v = count)")
+    code.should contain("if _v = count")
     code.should contain("w.write_int32(_v)")
     # == method must be generated
     code.should contain("def ==(other : self) : Bool")
@@ -623,7 +623,7 @@ describe Proto::Generator::FileGenerator do
     code.should contain("property child : Embed::Inner? = nil")
     code.should contain("def has_child? : Bool")
     code.should contain("def clear_child : Nil")
-    code.should contain("if (_v = child)")
+    code.should contain("if _v = child")
     code.should contain("w.write_embedded(1) { |sub| _v.encode_partial(sub) }")
     code.should contain("return false unless child == other.child")
   end
@@ -863,7 +863,7 @@ describe Proto::Generator::FileGenerator do
     code.should contain("raise Proto::RequiredFieldError.new(\"Missing required field: child\") unless has_child?")
     code.should contain("msg.child = Req::Child.decode_partial(reader.read_embedded)")
     code.should contain("child.try &.validate_required_deep!")
-    code.should contain("if (_v = child)")
+    code.should contain("if _v = child")
     code.should contain("w.write_embedded(1) { |sub| _v.encode_partial(sub) }")
   end
 
@@ -950,7 +950,7 @@ describe Proto::Generator::FileGenerator do
     code.should contain("if count != 0")
     code.should contain("w.write_tag(1, Proto::WireType::VARINT)")
     code.should contain("w.write_int32(count)")
-    code.should_not contain("if (_v = count)")
+    code.should_not contain("if _v = count")
   end
 
   it "fails fast for unsupported TYPE_GROUP fields" do
