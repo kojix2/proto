@@ -132,6 +132,108 @@ describe Proto::Generator::TypeNameResolver do
 end
 
 describe Proto::Generator::FileGenerator do
+  it "escapes Crystal keyword field names" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "keyword_field.proto"
+    file.package = "keyword_field"
+    file.syntax = "proto3"
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Sample"
+
+    field = Proto::Bootstrap::FieldDescriptorProto.new
+    field.name = "alias"
+    field.number = 1
+    field.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    field.type = Proto::Bootstrap::FieldType::TYPE_STRING
+    msg.field << field
+    file.message_type << msg
+
+    index = Proto::Generator::TypeIndex.new([file])
+    generated = Proto::Generator::FileGenerator.new(file, index).generate
+
+    generated.should contain("property alias_ : String")
+    generated.should contain("msg.alias_ = reader.read_string")
+    generated.should contain("if !alias_.empty?")
+  end
+
+  it "normalizes lowercase enum member names to Crystal constants" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "lowercase_enum.proto"
+    file.package = "lowercase_enum"
+    file.syntax = "proto3"
+
+    enum_desc = Proto::Bootstrap::EnumDescriptorProto.new
+    enum_desc.name = "Mode"
+
+    none_value = Proto::Bootstrap::EnumValueDescriptorProto.new
+    none_value.name = "none"
+    none_value.number = 0
+    enum_desc.value << none_value
+
+    ready_value = Proto::Bootstrap::EnumValueDescriptorProto.new
+    ready_value.name = "READY"
+    ready_value.number = 1
+    enum_desc.value << ready_value
+
+    file.enum_type << enum_desc
+
+    index = Proto::Generator::TypeIndex.new([file])
+    generated = Proto::Generator::FileGenerator.new(file, index).generate
+
+    generated.should contain("NONE = 0")
+    generated.should contain("when 0 then NONE")
+    generated.should contain("READY = 1")
+  end
+
+  it "deduplicates enum numeric aliases in from_raw?" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "alias_enum.proto"
+    file.package = "alias_enum"
+    file.syntax = "proto3"
+
+    enum_desc = Proto::Bootstrap::EnumDescriptorProto.new
+    enum_desc.name = "Status"
+
+    first = Proto::Bootstrap::EnumValueDescriptorProto.new
+    first.name = "STATUS_UNSPECIFIED"
+    first.number = 0
+    enum_desc.value << first
+
+    alias_value = Proto::Bootstrap::EnumValueDescriptorProto.new
+    alias_value.name = "STATUS_DEFAULT"
+    alias_value.number = 0
+    enum_desc.value << alias_value
+
+    other = Proto::Bootstrap::EnumValueDescriptorProto.new
+    other.name = "STATUS_READY"
+    other.number = 1
+    enum_desc.value << other
+
+    file.enum_type << enum_desc
+
+    index = Proto::Generator::TypeIndex.new([file])
+    generated = Proto::Generator::FileGenerator.new(file, index).generate
+
+    generated.scan(/when 0 then/).size.should eq(1)
+    generated.should contain("when 1 then STATUS_READY")
+  end
+
+  it "emits relative requires for nested proto imports" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "minknow_api/manager.proto"
+    file.package = "minknow_api.manager"
+    file.dependency << "minknow_api/rpc_options.proto"
+    file.dependency << "google/protobuf/timestamp.proto"
+
+    index = Proto::Generator::TypeIndex.new([file])
+    gen = Proto::Generator::FileGenerator.new(file, index)
+    generated = gen.generate
+
+    generated.should contain("require \"./rpc_options.pb.cr\"")
+    generated.should contain("require \"../google/protobuf/timestamp.pb.cr\"")
+  end
+
   it "generates code matching the golden file for simple.proto" do
     # Load the descriptor by running protoc --descriptor_set_out
     # For unit testing without invoking protoc, we build a minimal descriptor manually.

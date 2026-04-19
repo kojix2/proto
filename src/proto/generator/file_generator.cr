@@ -127,9 +127,30 @@ module Proto
 
       private def emit_requires(io : IO) : Nil
         @file.dependency.each do |dep|
-          io << "require \"./#{dep.sub(/\.proto$/, ".pb.cr")}\"\n"
+          io << "require \"#{relative_require_path(dep)}\"\n"
         end
         io << "\n" unless @file.dependency.empty?
+      end
+
+      private def relative_require_path(dep : String) : String
+        target = dep.sub(/\.proto$/, ".pb.cr")
+        current_dir = File.dirname(output_name)
+        return "./#{target}" if current_dir == "."
+
+        current_parts = current_dir.split('/')
+        target_parts = target.split('/')
+
+        while current_parts.any? && target_parts.any? && current_parts.first == target_parts.first
+          current_parts.shift
+          target_parts.shift
+        end
+
+        relative_parts = [] of String
+        current_parts.size.times { relative_parts << ".." }
+        relative_parts.concat(target_parts)
+
+        relative = relative_parts.join('/')
+        relative.starts_with?(".") ? relative : "./#{relative}"
       end
 
       private def emit_body(io : IO) : Nil
@@ -242,19 +263,37 @@ module Proto
       private def emit_enum(io : IO, en : Bootstrap::EnumDescriptorProto, indent : String) : Nil
         io << "#{indent}enum #{en.name} : Int32\n"
         en.value.each do |v|
-          io << "#{indent}  #{v.name} = #{v.number}\n"
+          io << "#{indent}  #{enum_member_name(v.name)} = #{v.number}\n"
         end
         io << "\n"
         io << "#{indent}  def self.from_raw?(raw : Int32) : self?\n"
         io << "#{indent}    case raw\n"
+        seen_numbers = Set(Int32).new
         en.value.each do |v|
-          io << "#{indent}    when #{v.number} then #{v.name}\n"
+          next if seen_numbers.includes?(v.number)
+          seen_numbers.add(v.number)
+          io << "#{indent}    when #{v.number} then #{enum_member_name(v.name)}\n"
         end
         io << "#{indent}    else\n"
         io << "#{indent}      nil\n"
         io << "#{indent}    end\n"
         io << "#{indent}  end\n"
         io << "#{indent}end\n\n"
+      end
+
+      private def enum_member_name(name : String) : String
+        normalized = name.gsub(/[^A-Za-z0-9_]/, "_")
+        if normalized.empty?
+          normalized = "VALUE"
+        elsif normalized[0].ascii_number?
+          normalized = "VALUE_#{normalized}"
+        end
+
+        if normalized[0].ascii_lowercase?
+          normalized = normalized.upcase
+        end
+
+        normalized
       end
 
       private def emit_message(io : IO, msg : Bootstrap::DescriptorProto, indent : String) : Nil
@@ -349,12 +388,13 @@ module Proto
       end
 
       private def emit_property(io : IO, field : Bootstrap::FieldDescriptorProto, msg : Bootstrap::DescriptorProto, indent : String) : Nil
+        fname = field_identifier(field)
         crystal_type = crystal_type_for(field)
         default = default_value_for(field)
         if real_oneof_field?(field, msg) || tracked_presence_field?(field)
-          io << "#{indent}getter #{field.name} : #{crystal_type} = #{default}\n"
+          io << "#{indent}getter #{fname} : #{crystal_type} = #{default}\n"
         else
-          io << "#{indent}property #{field.name} : #{crystal_type} = #{default}\n"
+          io << "#{indent}property #{fname} : #{crystal_type} = #{default}\n"
         end
       end
 
@@ -392,13 +432,14 @@ module Proto
       end
 
       private def emit_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, msg : Bootstrap::DescriptorProto, indent : String) : Nil
+        fname = field_identifier(field)
         repeated = field.label == Bootstrap::FieldLabel::LABEL_REPEATED
         type = field.type
 
         if map_entry_descriptor_for(field)
           entry_type = resolve_type(field.type_name)
           io << "#{indent}entry = #{entry_type}.decode_partial(reader.read_embedded)\n"
-          io << "#{indent}msg.#{field.name}[entry.key] = entry.value\n"
+          io << "#{indent}msg.#{fname}[entry.key] = entry.value\n"
           return
         end
 
@@ -411,40 +452,42 @@ module Proto
           # Determine packed reader method
           packed_reader = packed_reader_for(type)
           io << "#{indent}if wt == Proto::WireType::LENGTH_DELIMITED\n"
-          io << "#{indent}  reader.#{packed_reader} { |v| msg.#{field.name} << #{packed_convert(type, "v")} }\n"
+          io << "#{indent}  reader.#{packed_reader} { |v| msg.#{fname} << #{packed_convert(type, "v")} }\n"
           io << "#{indent}else\n"
-          io << "#{indent}  msg.#{field.name} << reader.#{reader_method}\n"
+          io << "#{indent}  msg.#{fname} << reader.#{reader_method}\n"
           io << "#{indent}end\n"
         else
           reader_method = SCALAR_READER_MAP[type]? || "read_uint64"
           reader_call = "reader.#{reader_method}"
           if repeated
-            io << "#{indent}msg.#{field.name} << #{reader_call}\n"
+            io << "#{indent}msg.#{fname} << #{reader_call}\n"
           else
-            io << "#{indent}msg.#{field.name} = #{reader_call}\n"
+            io << "#{indent}msg.#{fname} = #{reader_call}\n"
           end
         end
       end
 
       private def emit_message_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, repeated : Bool, indent : String) : Nil
+        fname = field_identifier(field)
         crystal_type = resolve_type(field.type_name)
         if repeated
-          io << "#{indent}msg.#{field.name} << #{crystal_type}.decode_partial(reader.read_embedded)\n"
+          io << "#{indent}msg.#{fname} << #{crystal_type}.decode_partial(reader.read_embedded)\n"
         else
-          io << "#{indent}msg.#{field.name} = #{crystal_type}.decode_partial(reader.read_embedded)\n"
+          io << "#{indent}msg.#{fname} = #{crystal_type}.decode_partial(reader.read_embedded)\n"
         end
       end
 
       private def emit_enum_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, repeated : Bool, indent : String) : Nil
+        fname = field_identifier(field)
         crystal_type = resolve_type(field.type_name)
         if repeated
           io << "#{indent}if wt == Proto::WireType::LENGTH_DELIMITED\n"
           io << "#{indent}  reader.read_packed_varint do |v|\n"
           if open_enum_field?(field)
-            io << "#{indent}    msg.#{field.name} << #{open_enum_type_for(field)}.new(v.to_i32!)\n"
+            io << "#{indent}    msg.#{fname} << #{open_enum_type_for(field)}.new(v.to_i32!)\n"
           else
             io << "#{indent}    begin\n"
-            io << "#{indent}      msg.#{field.name} << #{crystal_type}.from_value(v.to_i32!)\n"
+            io << "#{indent}      msg.#{fname} << #{crystal_type}.from_value(v.to_i32!)\n"
             io << "#{indent}    rescue ArgumentError\n"
             io << "#{indent}      msg.add_unknown_varint(fn, v)\n"
             io << "#{indent}    end\n"
@@ -453,10 +496,10 @@ module Proto
           io << "#{indent}else\n"
           io << "#{indent}  _raw = reader.read_int32\n"
           if open_enum_field?(field)
-            io << "#{indent}  msg.#{field.name} << #{open_enum_type_for(field)}.new(_raw)\n"
+            io << "#{indent}  msg.#{fname} << #{open_enum_type_for(field)}.new(_raw)\n"
           else
             io << "#{indent}  begin\n"
-            io << "#{indent}    msg.#{field.name} << #{crystal_type}.from_value(_raw)\n"
+            io << "#{indent}    msg.#{fname} << #{crystal_type}.from_value(_raw)\n"
             io << "#{indent}  rescue ArgumentError\n"
             io << "#{indent}    msg.add_unknown_varint(fn, _raw.to_u64!)\n"
             io << "#{indent}  end\n"
@@ -465,10 +508,10 @@ module Proto
         else
           io << "#{indent}_raw = reader.read_int32\n"
           if open_enum_field?(field)
-            io << "#{indent}msg.#{field.name} = #{open_enum_type_for(field)}.new(_raw)\n"
+            io << "#{indent}msg.#{fname} = #{open_enum_type_for(field)}.new(_raw)\n"
           else
             io << "#{indent}begin\n"
-            io << "#{indent}  msg.#{field.name} = #{crystal_type}.from_value(_raw)\n"
+            io << "#{indent}  msg.#{fname} = #{crystal_type}.from_value(_raw)\n"
             io << "#{indent}rescue ArgumentError\n"
             io << "#{indent}  msg.add_unknown_varint(fn, _raw.to_u64!)\n"
             io << "#{indent}end\n"
@@ -560,13 +603,14 @@ module Proto
       end
 
       private def emit_regular_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto, indent : String) : Nil
+        fname = field_identifier(field)
         repeated = field.label == Bootstrap::FieldLabel::LABEL_REPEATED
         type = field.type
         num = field.number
 
         if map_entry_descriptor_for(field)
           entry_type = resolve_type(field.type_name)
-          io << "#{indent}#{field.name}.each do |k, v|\n"
+          io << "#{indent}#{fname}.each do |k, v|\n"
           io << "#{indent}  entry = #{entry_type}.new\n"
           io << "#{indent}  entry.key = k\n"
           io << "#{indent}  entry.value = v\n"
@@ -577,11 +621,11 @@ module Proto
 
         if type == Bootstrap::FieldType::TYPE_MESSAGE
           if repeated
-            io << "#{indent}#{field.name}.each do |item|\n"
+            io << "#{indent}#{fname}.each do |item|\n"
             io << "#{indent}  w.write_embedded(#{num}) { |sub| item.encode_partial(sub) }\n"
             io << "#{indent}end\n"
           else
-            io << "#{indent}if (_v = #{field.name})\n"
+            io << "#{indent}if (_v = #{fname})\n"
             io << "#{indent}  w.write_embedded(#{num}) { |sub| _v.encode_partial(sub) }\n"
             io << "#{indent}end\n"
           end
@@ -592,13 +636,13 @@ module Proto
           if type == Bootstrap::FieldType::TYPE_ENUM
             io << "#{indent}w.write_packed(#{num}) do |buf|\n"
             io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
-            io << "#{indent}  #{field.name}.each { |item| sub.write_int32(#{enum_encode_value_expr(field, "item")}) }\n"
+            io << "#{indent}  #{fname}.each { |item| sub.write_int32(#{enum_encode_value_expr(field, "item")}) }\n"
             io << "#{indent}end\n"
           else
             writer_method = SCALAR_WRITER_MAP[type]? || "write_uint64"
             io << "#{indent}w.write_packed(#{num}) do |buf|\n"
             io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
-            io << "#{indent}  #{field.name}.each { |item| sub.#{writer_method}(item) }\n"
+            io << "#{indent}  #{fname}.each { |item| sub.#{writer_method}(item) }\n"
             io << "#{indent}end\n"
           end
         else
@@ -607,25 +651,26 @@ module Proto
       end
 
       private def emit_enum_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto, repeated : Bool, num : Int32, indent : String) : Nil
+        fname = field_identifier(field)
         if repeated
           io << "#{indent}w.write_packed(#{num}) do |buf|\n"
           io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
-          io << "#{indent}  #{field.name}.each { |item| sub.write_int32(#{enum_encode_value_expr(field, "item")}) }\n"
+          io << "#{indent}  #{fname}.each { |item| sub.write_int32(#{enum_encode_value_expr(field, "item")}) }\n"
           io << "#{indent}end\n"
         else
           if tracked_presence_field?(field)
             io << "#{indent}if has_#{field.name}?\n"
             io << "#{indent}  w.write_tag(#{num}, Proto::WireType::VARINT)\n"
-            io << "#{indent}  w.write_int32(#{enum_encode_value_expr(field, field.name)})\n"
+            io << "#{indent}  w.write_int32(#{enum_encode_value_expr(field, fname)})\n"
             io << "#{indent}end\n"
           elsif proto3_implicit_presence_field?(field)
-            io << "#{indent}if #{enum_encode_value_expr(field, field.name)} != 0\n"
+            io << "#{indent}if #{enum_encode_value_expr(field, fname)} != 0\n"
             io << "#{indent}  w.write_tag(#{num}, Proto::WireType::VARINT)\n"
-            io << "#{indent}  w.write_int32(#{enum_encode_value_expr(field, field.name)})\n"
+            io << "#{indent}  w.write_int32(#{enum_encode_value_expr(field, fname)})\n"
             io << "#{indent}end\n"
           else
             io << "#{indent}w.write_tag(#{num}, Proto::WireType::VARINT)\n"
-            io << "#{indent}w.write_int32(#{enum_encode_value_expr(field, field.name)})\n"
+            io << "#{indent}w.write_int32(#{enum_encode_value_expr(field, fname)})\n"
           end
         end
       end
@@ -861,16 +906,17 @@ module Proto
 
         io << "#{indent}def #{clear_method} : Nil\n"
         fields.each do |field|
-          io << "#{indent}  @#{field.name} = #{default_value_for(field)}\n"
+          io << "#{indent}  @#{field_identifier(field)} = #{default_value_for(field)}\n"
         end
         io << "#{indent}  @#{case_prop} = #{case_enum}::NONE\n"
         io << "#{indent}end\n\n"
 
         fields.each do |field|
+          fname = field_identifier(field)
           field_type = crystal_type_for(field)
           case_value = oneof_case_value_name(field.name)
 
-          io << "#{indent}def #{field.name}=(value : #{field_type}) : #{field_type}\n"
+          io << "#{indent}def #{fname}=(value : #{field_type}) : #{field_type}\n"
           if field_type.ends_with?("?")
             io << "#{indent}  if value.nil?\n"
             io << "#{indent}    #{clear_method}\n"
@@ -878,7 +924,7 @@ module Proto
             io << "#{indent}  end\n"
           end
           io << "#{indent}  #{clear_method}\n"
-          io << "#{indent}  @#{field.name} = value\n"
+          io << "#{indent}  @#{fname} = value\n"
           io << "#{indent}  @#{case_prop} = #{case_enum}::#{case_value}\n"
           io << "#{indent}  value\n"
           io << "#{indent}end\n\n"
@@ -887,16 +933,17 @@ module Proto
 
       private def emit_tracked_presence_helpers(io : IO, fields : Array(Bootstrap::FieldDescriptorProto), indent : String) : Nil
         fields.each do |field|
+          fname = field_identifier(field)
           field_type = crystal_type_for(field)
           default = default_value_for(field)
 
           io << "#{indent}def clear_#{field.name} : Nil\n"
-          io << "#{indent}  @#{field.name} = #{default}\n"
+          io << "#{indent}  @#{fname} = #{default}\n"
           io << "#{indent}  @has_#{field.name} = false\n"
           io << "#{indent}end\n\n"
 
-          io << "#{indent}def #{field.name}=(value : #{field_type}) : #{field_type}\n"
-          io << "#{indent}  @#{field.name} = value\n"
+          io << "#{indent}def #{fname}=(value : #{field_type}) : #{field_type}\n"
+          io << "#{indent}  @#{fname} = value\n"
           io << "#{indent}  @has_#{field.name} = true\n"
           io << "#{indent}  value\n"
           io << "#{indent}end\n\n"
@@ -905,12 +952,13 @@ module Proto
 
       private def emit_derived_presence_helpers(io : IO, fields : Array(Bootstrap::FieldDescriptorProto), indent : String) : Nil
         fields.each do |field|
+          fname = field_identifier(field)
           io << "#{indent}def has_#{field.name}? : Bool\n"
-          io << "#{indent}  !#{field.name}.nil?\n"
+          io << "#{indent}  !#{fname}.nil?\n"
           io << "#{indent}end\n\n"
 
           io << "#{indent}def clear_#{field.name} : Nil\n"
-          io << "#{indent}  self.#{field.name} = nil\n"
+          io << "#{indent}  self.#{fname} = nil\n"
           io << "#{indent}end\n\n"
         end
       end
@@ -942,7 +990,8 @@ module Proto
           io << "#{indent}  return false unless has_#{field.name}? == other.has_#{field.name}?\n"
         end
         msg.field.each do |field|
-          io << "#{indent}  return false unless #{field.name} == other.#{field.name}\n"
+          fname = field_identifier(field)
+          io << "#{indent}  return false unless #{fname} == other.#{fname}\n"
         end
         io << "#{indent}  true\n"
         io << "#{indent}end\n"
@@ -953,9 +1002,10 @@ module Proto
       end
 
       private def emit_proto3_optional_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto, indent : String) : Nil
+        fname = field_identifier(field)
         type = field.type
         num = field.number
-        io << "#{indent}if (_v = #{field.name})\n"
+        io << "#{indent}if (_v = #{fname})\n"
         if type == Bootstrap::FieldType::TYPE_MESSAGE
           io << "#{indent}  w.write_embedded(#{num}) { |sub| _v.encode_partial(sub) }\n"
         elsif type == Bootstrap::FieldType::TYPE_ENUM
@@ -1006,12 +1056,13 @@ module Proto
 
       private def emit_deep_required_validation_body(io : IO, msg : Bootstrap::DescriptorProto, indent : String) : Nil
         msg.field.each do |field|
+          fname = field_identifier(field)
           if map_entry = map_entry_descriptor_for(field)
             value_field = map_entry.field.find { |field_desc| field_desc.name == "value" }
             next unless value_field
             next unless value_field.type == Bootstrap::FieldType::TYPE_MESSAGE
 
-            io << "#{indent}  #{field.name}.each_value do |value|\n"
+            io << "#{indent}  #{fname}.each_value do |value|\n"
             io << "#{indent}    value.validate_required_deep!\n"
             io << "#{indent}  end\n"
             next
@@ -1020,11 +1071,11 @@ module Proto
           next unless field.type == Bootstrap::FieldType::TYPE_MESSAGE
 
           if field.label == Bootstrap::FieldLabel::LABEL_REPEATED
-            io << "#{indent}  #{field.name}.each do |item|\n"
+            io << "#{indent}  #{fname}.each do |item|\n"
             io << "#{indent}    item.validate_required_deep!\n"
             io << "#{indent}  end\n"
           else
-            io << "#{indent}  #{field.name}.try &.validate_required_deep!\n"
+            io << "#{indent}  #{fname}.try &.validate_required_deep!\n"
           end
         end
       end
@@ -1050,11 +1101,12 @@ module Proto
 
       private def emit_scalar_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto,
                                            repeated : Bool, num : Int32, indent : String) : Nil
+        fname = field_identifier(field)
         writer_method = SCALAR_WRITER_MAP[field.type]? || "write_uint64"
         wire_const = SCALAR_WIRE_TYPE_MAP[field.type]? || "Proto::WireType::VARINT"
 
         if repeated
-          io << "#{indent}#{field.name}.each do |item|\n"
+          io << "#{indent}#{fname}.each do |item|\n"
           io << "#{indent}  w.write_tag(#{num}, #{wire_const})\n"
           io << "#{indent}  w.#{writer_method}(item)\n"
           io << "#{indent}end\n"
@@ -1064,17 +1116,42 @@ module Proto
         if tracked_presence_field?(field)
           io << "#{indent}if has_#{field.name}?\n"
           io << "#{indent}  w.write_tag(#{num}, #{wire_const})\n"
-          io << "#{indent}  w.#{writer_method}(#{field.name})\n"
+          io << "#{indent}  w.#{writer_method}(#{fname})\n"
           io << "#{indent}end\n"
         elsif proto3_implicit_presence_field?(field)
-          condition = non_default_encode_condition(field, field.name)
+          condition = non_default_encode_condition(field, fname)
           io << "#{indent}if #{condition}\n"
           io << "#{indent}  w.write_tag(#{num}, #{wire_const})\n"
-          io << "#{indent}  w.#{writer_method}(#{field.name})\n"
+          io << "#{indent}  w.#{writer_method}(#{fname})\n"
           io << "#{indent}end\n"
         else
           io << "#{indent}w.write_tag(#{num}, #{wire_const})\n"
-          io << "#{indent}w.#{writer_method}(#{field.name})\n"
+          io << "#{indent}w.#{writer_method}(#{fname})\n"
+        end
+      end
+
+      private def field_identifier(field : Bootstrap::FieldDescriptorProto) : String
+        crystal_identifier(field.name)
+      end
+
+      private def crystal_identifier(name : String) : String
+        ident = name
+        crystal_keyword?(ident) ? "#{ident}_" : ident
+      end
+
+      private def crystal_keyword?(name : String) : Bool
+        case name
+        when "abstract", "alias", "annotation", "as", "asm", "begin", "break",
+             "case", "class", "def", "do", "else", "elsif", "end", "ensure",
+             "enum", "extend", "for", "fun", "if", "in", "include", "instance_sizeof",
+             "is_a?", "lib", "macro", "module", "next", "nil", "nil?", "of", "out",
+             "pointerof", "private", "protected", "require", "rescue", "responds_to?",
+             "return", "select", "self", "sizeof", "struct", "super", "then", "type",
+             "typeof", "uninitialized", "union", "unless", "until", "verbatim", "when",
+             "while", "with", "yield"
+          true
+        else
+          false
         end
       end
 
