@@ -14,7 +14,7 @@
 <script type="text/javascript" src="../js/doc.js"></script>
 
   <meta name="repository-name" content="proto">
-  <title>Proto::Message - proto main</title>
+  <title>Proto::UnknownFieldData - proto main</title>
   <script type="text/javascript">
     CrystalDocs.base_path = "../";
   </script>
@@ -247,7 +247,7 @@
       
     </li>
   
-  <li class=" current" data-id="proto/Proto/Message" data-name="proto::message">
+  <li class=" " data-id="proto/Proto/Message" data-name="proto::message">
       <a href="../Proto/Message.html">Message</a>
       
     </li>
@@ -267,7 +267,7 @@
       
     </li>
   
-  <li class=" " data-id="proto/Proto/UnknownFieldData" data-name="proto::unknownfielddata">
+  <li class=" current" data-id="proto/Proto/UnknownFieldData" data-name="proto::unknownfielddata">
       <a href="../Proto/UnknownFieldData.html">UnknownFieldData</a>
       
     </li>
@@ -317,8 +317,8 @@
 <h1 class="type-name">
 
   <span class="kind">
-    module
-  </span> Proto::<wbr>Message
+    alias
+  </span> Proto::<wbr>UnknownFieldData
 
 </h1>
 
@@ -326,40 +326,21 @@
 
 
 
+
+
   <h2>
-    <a id="overview" class="anchor" href="#overview">
+    <a id="alias-definition" class="anchor" href="#alias-definition">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
 </a>
-    Overview
+    Alias Definition
   </h2>
-
-  <p>Base module for generated message classes.</p>
-<p>Concrete generated classes include this module and implement:
-def encode(io : IO) : Nil
-def self.decode(io : IO) : self</p>
-<p>The Bytes convenience methods are provided here.</p>
+  <code>Array(<a href="../Proto/UnknownField.html">Proto::UnknownField</a>) | Slice(UInt8) | UInt32 | UInt64</code>
 
 
 
 
-
-
-
-  <h2>
-    <a id="included-modules" class="anchor" href="#included-modules">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>
-    Included Modules
-  </h2>
-  <ul class="other-types-list">
-    
-      <li class="other-type"><a href="../Proto/HasUnknownFields.html">Proto::HasUnknownFields</a></li>
-    
-  </ul>
 
 
 
@@ -380,8 +361,8 @@ def self.decode(io : IO) : self</p>
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/message.cr#L9" target="_blank">
-        proto/message.cr
+      <a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/unknown_field.cr#L3" target="_blank">
+        proto/unknown_field.cr
       </a>
     
     <br/>
@@ -394,273 +375,23 @@ def self.decode(io : IO) : self</p>
   
 
   
-  <h2>
-    <a id="class-method-summary" class="anchor" href="#class-method-summary">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>
-    Class Method Summary
-  </h2>
-  <ul class="list-summary">
-    
-      <li class="entry-summary">
-        <a href="#decode_partial%28io%3AIO%29-class-method" class="signature"><strong>.decode_partial</strong>(io : IO)</a>
-        
-      </li>
-    
-  </ul>
-
 
   
 
   
-  <h2>
-    <a id="instance-method-summary" class="anchor" href="#instance-method-summary">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>
-    Instance Method Summary
-  </h2>
-  <ul class="list-summary">
-    
-      <li class="entry-summary">
-        <a href="#encode%28io%3AIO%29%3ANil-instance-method" class="signature"><strong>#encode</strong>(io : IO) : Nil</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#encode%3ABytes-instance-method" class="signature"><strong>#encode</strong> : Bytes</a>
-        
-          <div class="summary"><p>Serialize this message to a byte slice.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#encode_partial%28io%3AIO%29%3ANil-instance-method" class="signature"><strong>#encode_partial</strong>(io : IO) : Nil</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#encode_partial%3ABytes-instance-method" class="signature"><strong>#encode_partial</strong> : Bytes</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#validate_required%21%3ANil-instance-method" class="signature"><strong>#validate_required!</strong> : Nil</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#validate_required_deep%21%3ANil-instance-method" class="signature"><strong>#validate_required_deep!</strong> : Nil</a>
-        
-      </li>
-    
-  </ul>
-
 
 
   <div class="methods-inherited">
-    
-      
-
-  <h3>Instance methods inherited from module <code><a href="../Proto/HasUnknownFields.html">Proto::HasUnknownFields</a></code></h3>
-  
-  
-    <a href="../Proto/HasUnknownFields.html#add_unknown_varint%28field_number%3AInt32%2Cvalue%3AUInt64%29%3ANil-instance-method" class="tooltip">
-      <span>add_unknown_varint(field_number : Int32, value : UInt64) : Nil</span>
-    add_unknown_varint</a>, 
-    
-  
-    <a href="../Proto/HasUnknownFields.html#capture_unknown_field%28reader%3AWire%3A%3AReader%2Cfield_number%3AInt32%2Cwire_type%3AInt32%29%3ANil-instance-method" class="tooltip">
-      <span>capture_unknown_field(reader : Wire::Reader, field_number : Int32, wire_type : Int32) : Nil</span>
-    capture_unknown_field</a>, 
-    
-  
-    <a href="../Proto/HasUnknownFields.html#extension_value%3F%28descriptor%3AT%29%3AExtensionValue%7CNilforallT-instance-method" class="tooltip">
-      <span>extension_value?(descriptor : T) : ExtensionValue | Nil forall T</span>
-    extension_value?</a>, 
-    
-  
-    <a href="../Proto/HasUnknownFields.html#extension_values%28descriptor%3AT%29%3AArray%28ExtensionValue%29forallT-instance-method" class="tooltip">
-      <span>extension_values(descriptor : T) : Array(ExtensionValue) forall T</span>
-    extension_values</a>, 
-    
-  
-    <a href="../Proto/HasUnknownFields.html#has_extension%3F%28descriptor%3AT%29%3ABoolforallT-instance-method" class="tooltip">
-      <span>has_extension?(descriptor : T) : Bool forall T</span>
-    has_extension?</a>, 
-    
-  
-    <a href="../Proto/HasUnknownFields.html#unknown_fields%3AArray%28UnknownField%29-instance-method" class="tooltip">
-      <span>unknown_fields : Array(UnknownField)</span>
-    unknown_fields</a>, 
-    
-  
-    <a href="../Proto/HasUnknownFields.html#write_unknown_fields%28writer%3AWire%3A%3AWriter%29%3ANil-instance-method" class="tooltip">
-      <span>write_unknown_fields(writer : Wire::Writer) : Nil</span>
-    write_unknown_fields</a>
-    
-  
-
-
-      
-
-
-      
-
-
-      
-
-
     
   </div>
 
   
 
   
-  <h2>
-    <a id="class-method-detail" class="anchor" href="#class-method-detail">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>
-    Class Method Detail
-  </h2>
-  
-    <div class="entry-detail" id="decode_partial(io:IO)-class-method">
-      <div class="signature">
-        
-        def self.<strong>decode_partial</strong>(io : IO)
-
-        <a class="method-permalink" href="#decode_partial%28io%3AIO%29-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/message.cr#L19" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-
 
   
 
   
-  <h2>
-    <a id="instance-method-detail" class="anchor" href="#instance-method-detail">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>
-    Instance Method Detail
-  </h2>
-  
-    <div class="entry-detail" id="encode(io:IO):Nil-instance-method">
-      <div class="signature">
-        
-        def <strong>encode</strong>(io : IO) : Nil
-
-        <a class="method-permalink" href="#encode%28io%3AIO%29%3ANil-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/message.cr#L23" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="encode:Bytes-instance-method">
-      <div class="signature">
-        
-        def <strong>encode</strong> : Bytes
-
-        <a class="method-permalink" href="#encode%3ABytes-instance-method">#</a>
-      </div>
-      
-        <div class="doc">
-          
-          <p>Serialize this message to a byte slice.</p>
-        </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/message.cr#L32" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="encode_partial(io:IO):Nil-instance-method">
-      <div class="signature">
-        
-        def <strong>encode_partial</strong>(io : IO) : Nil
-
-        <a class="method-permalink" href="#encode_partial%28io%3AIO%29%3ANil-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/message.cr#L27" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="encode_partial:Bytes-instance-method">
-      <div class="signature">
-        
-        def <strong>encode_partial</strong> : Bytes
-
-        <a class="method-permalink" href="#encode_partial%3ABytes-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/message.cr#L38" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="validate_required!:Nil-instance-method">
-      <div class="signature">
-        
-        def <strong>validate_required!</strong> : Nil
-
-        <a class="method-permalink" href="#validate_required%21%3ANil-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/message.cr#L12" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="validate_required_deep!:Nil-instance-method">
-      <div class="signature">
-        
-        def <strong>validate_required_deep!</strong> : Nil
-
-        <a class="method-permalink" href="#validate_required_deep%21%3ANil-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/message.cr#L15" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-
 
 
 </div>

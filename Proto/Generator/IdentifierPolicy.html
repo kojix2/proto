@@ -14,7 +14,7 @@
 <script type="text/javascript" src="../../js/doc.js"></script>
 
   <meta name="repository-name" content="proto">
-  <title>Proto::Bootstrap::CodeGeneratorRequest - proto main</title>
+  <title>Proto::Generator::IdentifierPolicy - proto main</title>
   <script type="text/javascript">
     CrystalDocs.base_path = "../../";
   </script>
@@ -62,12 +62,12 @@
       
         <ul>
   
-  <li class="parent open current" data-id="proto/Proto/Bootstrap" data-name="proto::bootstrap">
+  <li class="parent " data-id="proto/Proto/Bootstrap" data-name="proto::bootstrap">
       <a href="../../Proto/Bootstrap.html">Bootstrap</a>
       
         <ul>
   
-  <li class=" current" data-id="proto/Proto/Bootstrap/CodeGeneratorRequest" data-name="proto::bootstrap::codegeneratorrequest">
+  <li class=" " data-id="proto/Proto/Bootstrap/CodeGeneratorRequest" data-name="proto::bootstrap::codegeneratorrequest">
       <a href="../../Proto/Bootstrap/CodeGeneratorRequest.html">CodeGeneratorRequest</a>
       
     </li>
@@ -172,7 +172,7 @@
       
     </li>
   
-  <li class="parent " data-id="proto/Proto/Generator" data-name="proto::generator">
+  <li class="parent open current" data-id="proto/Proto/Generator" data-name="proto::generator">
       <a href="../../Proto/Generator.html">Generator</a>
       
         <ul>
@@ -192,7 +192,7 @@
       
     </li>
   
-  <li class=" " data-id="proto/Proto/Generator/IdentifierPolicy" data-name="proto::generator::identifierpolicy">
+  <li class=" current" data-id="proto/Proto/Generator/IdentifierPolicy" data-name="proto::generator::identifierpolicy">
       <a href="../../Proto/Generator/IdentifierPolicy.html">IdentifierPolicy</a>
       
     </li>
@@ -317,13 +317,13 @@
 <h1 class="type-name">
 
   <span class="kind">
-    class
-  </span> Proto::<wbr>Bootstrap::<wbr>CodeGeneratorRequest
+    module
+  </span> Proto::<wbr>Generator::<wbr>IdentifierPolicy
 
 </h1>
 
 
-  <ul class="superclass-hierarchy"><li class="superclass"><a href="../../Proto/Bootstrap/CodeGeneratorRequest.html">Proto::Bootstrap::CodeGeneratorRequest</a></li><li class="superclass">Reference</li><li class="superclass">Object</li></ul>
+
 
 
 
@@ -335,20 +335,18 @@
 
 
   <h2>
-    <a id="included-modules" class="anchor" href="#included-modules">
+    <a id="extended-modules" class="anchor" href="#extended-modules">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
 </a>
-    Included Modules
+    Extended Modules
   </h2>
   <ul class="other-types-list">
     
-      <li class="other-type"><a href="../../Proto/HasUnknownFields.html">Proto::HasUnknownFields</a></li>
+      <li class="other-type"><a href="../../Proto/Generator/IdentifierPolicy.html">Proto::Generator::IdentifierPolicy</a></li>
     
   </ul>
-
-
 
 
 
@@ -367,8 +365,8 @@
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L9" target="_blank">
-        proto/bootstrap/plugin.cr
+      <a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/generator/identifier_policy.cr#L3" target="_blank">
+        proto/generator/identifier_policy.cr
       </a>
     
     <br/>
@@ -379,28 +377,6 @@
 
 
   
-  <h2>
-    <a id="constructors" class="anchor" href="#constructors">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>
-    Constructors
-  </h2>
-  <ul class="list-summary">
-    
-      <li class="entry-summary">
-        <a href="#decode%28io%3AIO%29%3Aself-class-method" class="signature"><strong>.decode</strong>(io : IO) : <span class="k">self</span></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#read_proto%28io%3AIO%29%3Aself-class-method" class="signature"><strong>.read_proto</strong>(io : IO) : <span class="k">self</span></a>
-        
-      </li>
-    
-  </ul>
-
 
   
 
@@ -418,44 +394,27 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#encode%28io%3AIO%29%3ANil-instance-method" class="signature"><strong>#encode</strong>(io : IO) : Nil</a>
+        <a href="#crystal_identifier%28name%3AString%29%3AString-instance-method" class="signature"><strong>#crystal_identifier</strong>(name : String) : String</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#file_descriptor%28name%3AString%29%3AFileDescriptorProto%7CNil-instance-method" class="signature"><strong>#file_descriptor</strong>(name : String) : FileDescriptorProto | Nil</a>
-        
-          <div class="summary"><p>Convenience: find the FileDescriptorProto for a given file name.</p></div>
+        <a href="#crystal_keyword%3F%28name%3AString%29%3ABool-instance-method" class="signature"><strong>#crystal_keyword?</strong>(name : String) : Bool</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#file_to_generate%3AArray%28String%29-instance-method" class="signature"><strong>#file_to_generate</strong> : Array(String)</a>
+        <a href="#enum_member_name%28name%3AString%29%3AString-instance-method" class="signature"><strong>#enum_member_name</strong>(name : String) : String</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#file_to_generate%3D%28file_to_generate%3AArray%28String%29%29-instance-method" class="signature"><strong>#file_to_generate=</strong>(file_to_generate : Array(String))</a>
+        <a href="#field_identifier%28field_name%3AString%29%3AString-instance-method" class="signature"><strong>#field_identifier</strong>(field_name : String) : String</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#parameter%3AString-instance-method" class="signature"><strong>#parameter</strong> : String</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#parameter%3D%28parameter%3AString%29-instance-method" class="signature"><strong>#parameter=</strong>(parameter : String)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#proto_file%3AArray%28FileDescriptorProto%29-instance-method" class="signature"><strong>#proto_file</strong> : Array(FileDescriptorProto)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#proto_file%3D%28proto_file%3AArray%28FileDescriptorProto%29%29-instance-method" class="signature"><strong>#proto_file=</strong>(proto_file : Array(FileDescriptorProto))</a>
+        <a href="#oneof_case_value_name%28field_name%3AString%29%3AString-instance-method" class="signature"><strong>#oneof_case_value_name</strong>(field_name : String) : String</a>
         
       </li>
     
@@ -465,129 +424,9 @@
 
   <div class="methods-inherited">
     
-      
-
-  <h3>Instance methods inherited from module <code><a href="../../Proto/HasUnknownFields.html">Proto::HasUnknownFields</a></code></h3>
-  
-  
-    <a href="../../Proto/HasUnknownFields.html#add_unknown_varint%28field_number%3AInt32%2Cvalue%3AUInt64%29%3ANil-instance-method" class="tooltip">
-      <span>add_unknown_varint(field_number : Int32, value : UInt64) : Nil</span>
-    add_unknown_varint</a>, 
-    
-  
-    <a href="../../Proto/HasUnknownFields.html#capture_unknown_field%28reader%3AWire%3A%3AReader%2Cfield_number%3AInt32%2Cwire_type%3AInt32%29%3ANil-instance-method" class="tooltip">
-      <span>capture_unknown_field(reader : Wire::Reader, field_number : Int32, wire_type : Int32) : Nil</span>
-    capture_unknown_field</a>, 
-    
-  
-    <a href="../../Proto/HasUnknownFields.html#extension_value%3F%28descriptor%3AT%29%3AExtensionValue%7CNilforallT-instance-method" class="tooltip">
-      <span>extension_value?(descriptor : T) : ExtensionValue | Nil forall T</span>
-    extension_value?</a>, 
-    
-  
-    <a href="../../Proto/HasUnknownFields.html#extension_values%28descriptor%3AT%29%3AArray%28ExtensionValue%29forallT-instance-method" class="tooltip">
-      <span>extension_values(descriptor : T) : Array(ExtensionValue) forall T</span>
-    extension_values</a>, 
-    
-  
-    <a href="../../Proto/HasUnknownFields.html#has_extension%3F%28descriptor%3AT%29%3ABoolforallT-instance-method" class="tooltip">
-      <span>has_extension?(descriptor : T) : Bool forall T</span>
-    has_extension?</a>, 
-    
-  
-    <a href="../../Proto/HasUnknownFields.html#unknown_fields%3AArray%28UnknownField%29-instance-method" class="tooltip">
-      <span>unknown_fields : Array(UnknownField)</span>
-    unknown_fields</a>, 
-    
-  
-    <a href="../../Proto/HasUnknownFields.html#write_unknown_fields%28writer%3AWire%3A%3AWriter%29%3ANil-instance-method" class="tooltip">
-      <span>write_unknown_fields(writer : Wire::Writer) : Nil</span>
-    write_unknown_fields</a>
-    
-  
-
-
-      
-
-
-      
-
-
-      
-
-
-    
-      
-
-
-      
-
-
-      
-
-
-      
-
-
-    
-      
-
-
-      
-
-
-      
-
-
-      
-
-
-    
   </div>
 
   
-  <h2>
-    <a id="constructor-detail" class="anchor" href="#constructor-detail">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>
-    Constructor Detail
-  </h2>
-  
-    <div class="entry-detail" id="decode(io:IO):self-class-method">
-      <div class="signature">
-        
-        def self.<strong>decode</strong>(io : IO) : <span class="k">self</span>
-
-        <a class="method-permalink" href="#decode%28io%3AIO%29%3Aself-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L20" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="read_proto(io:IO):self-class-method">
-      <div class="signature">
-        
-        def self.<strong>read_proto</strong>(io : IO) : <span class="k">self</span>
-
-        <a class="method-permalink" href="#read_proto%28io%3AIO%29%3Aself-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L16" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-
 
   
 
@@ -603,135 +442,82 @@
     Instance Method Detail
   </h2>
   
-    <div class="entry-detail" id="encode(io:IO):Nil-instance-method">
+    <div class="entry-detail" id="crystal_identifier(name:String):String-instance-method">
       <div class="signature">
         
-        def <strong>encode</strong>(io : IO) : Nil
+        def <strong>crystal_identifier</strong>(name : String) : String
 
-        <a class="method-permalink" href="#encode%28io%3AIO%29%3ANil-instance-method">#</a>
+        <a class="method-permalink" href="#crystal_identifier%28name%3AString%29%3AString-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L35" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/generator/identifier_policy.cr#L33" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="file_descriptor(name:String):FileDescriptorProto|Nil-instance-method">
+    <div class="entry-detail" id="crystal_keyword?(name:String):Bool-instance-method">
       <div class="signature">
         
-        def <strong>file_descriptor</strong>(name : String) : <a href="../../Proto/Bootstrap/FileDescriptorProto.html">FileDescriptorProto</a> | Nil
+        def <strong>crystal_keyword?</strong>(name : String) : Bool
 
-        <a class="method-permalink" href="#file_descriptor%28name%3AString%29%3AFileDescriptorProto%7CNil-instance-method">#</a>
+        <a class="method-permalink" href="#crystal_keyword%3F%28name%3AString%29%3ABool-instance-method">#</a>
       </div>
-      
-        <div class="doc">
-          
-          <p>Convenience: find the FileDescriptorProto for a given file name.</p>
-        </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L44" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/generator/identifier_policy.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="file_to_generate:Array(String)-instance-method">
+    <div class="entry-detail" id="enum_member_name(name:String):String-instance-method">
       <div class="signature">
         
-        def <strong>file_to_generate</strong> : Array(String)
+        def <strong>enum_member_name</strong>(name : String) : String
 
-        <a class="method-permalink" href="#file_to_generate%3AArray%28String%29-instance-method">#</a>
+        <a class="method-permalink" href="#enum_member_name%28name%3AString%29%3AString-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/generator/identifier_policy.cr#L10" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="file_to_generate=(file_to_generate:Array(String))-instance-method">
+    <div class="entry-detail" id="field_identifier(field_name:String):String-instance-method">
       <div class="signature">
         
-        def <strong>file_to_generate=</strong>(file_to_generate : Array(String))
+        def <strong>field_identifier</strong>(field_name : String) : String
 
-        <a class="method-permalink" href="#file_to_generate%3D%28file_to_generate%3AArray%28String%29%29-instance-method">#</a>
+        <a class="method-permalink" href="#field_identifier%28field_name%3AString%29%3AString-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/generator/identifier_policy.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="parameter:String-instance-method">
+    <div class="entry-detail" id="oneof_case_value_name(field_name:String):String-instance-method">
       <div class="signature">
         
-        def <strong>parameter</strong> : String
+        def <strong>oneof_case_value_name</strong>(field_name : String) : String
 
-        <a class="method-permalink" href="#parameter%3AString-instance-method">#</a>
+        <a class="method-permalink" href="#oneof_case_value_name%28field_name%3AString%29%3AString-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L13" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="parameter=(parameter:String)-instance-method">
-      <div class="signature">
-        
-        def <strong>parameter=</strong>(parameter : String)
-
-        <a class="method-permalink" href="#parameter%3D%28parameter%3AString%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L13" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="proto_file:Array(FileDescriptorProto)-instance-method">
-      <div class="signature">
-        
-        def <strong>proto_file</strong> : Array(<a href="../../Proto/Bootstrap/FileDescriptorProto.html">FileDescriptorProto</a>)
-
-        <a class="method-permalink" href="#proto_file%3AArray%28FileDescriptorProto%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L14" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="proto_file=(proto_file:Array(FileDescriptorProto))-instance-method">
-      <div class="signature">
-        
-        def <strong>proto_file=</strong>(proto_file : Array(<a href="../../Proto/Bootstrap/FileDescriptorProto.html">FileDescriptorProto</a>))
-
-        <a class="method-permalink" href="#proto_file%3D%28proto_file%3AArray%28FileDescriptorProto%29%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/bootstrap/plugin.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/generator/identifier_policy.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -192,6 +192,11 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/Generator/IdentifierPolicy" data-name="proto::generator::identifierpolicy">
+      <a href="../Proto/Generator/IdentifierPolicy.html">IdentifierPolicy</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/Generator/MessageStructure" data-name="proto::generator::messagestructure">
       <a href="../Proto/Generator/MessageStructure.html">MessageStructure</a>
       
@@ -259,6 +264,11 @@
   
   <li class=" current" data-id="proto/Proto/UnknownField" data-name="proto::unknownfield">
       <a href="../Proto/UnknownField.html">UnknownField</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/UnknownFieldData" data-name="proto::unknownfielddata">
+      <a href="../Proto/UnknownFieldData.html">UnknownFieldData</a>
       
     </li>
   
@@ -355,7 +365,7 @@ Preserves wire_type so the field can be faithfully re-encoded.</p>
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L6" target="_blank">
+      <a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/unknown_field.cr#L7" target="_blank">
         proto/unknown_field.cr
       </a>
     
@@ -378,7 +388,7 @@ Preserves wire_type so the field can be faithfully re-encoded.</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28field_number%3AInt32%2Cwire_type%3AInt32%2Cdata%3ABytes%7CUInt64%7CUInt32%29-class-method" class="signature"><strong>.new</strong>(field_number : Int32, wire_type : Int32, data : Bytes | UInt64 | UInt32)</a>
+        <a href="#new%28field_number%3AInt32%2Cwire_type%3AInt32%2Cdata%3AUnknownFieldData%29-class-method" class="signature"><strong>.new</strong>(field_number : Int32, wire_type : Int32, data : UnknownFieldData)</a>
         
       </li>
     
@@ -401,7 +411,7 @@ Preserves wire_type so the field can be faithfully re-encoded.</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#data%3ABytes%7CUInt64%7CUInt32-instance-method" class="signature"><strong>#data</strong> : Bytes | UInt64 | UInt32</a>
+        <a href="#data%3AUnknownFieldData-instance-method" class="signature"><strong>#data</strong> : UnknownFieldData</a>
         
       </li>
     
@@ -472,18 +482,18 @@ Preserves wire_type so the field can be faithfully re-encoded.</p>
     Constructor Detail
   </h2>
   
-    <div class="entry-detail" id="new(field_number:Int32,wire_type:Int32,data:Bytes|UInt64|UInt32)-class-method">
+    <div class="entry-detail" id="new(field_number:Int32,wire_type:Int32,data:UnknownFieldData)-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(field_number : Int32, wire_type : Int32, data : Bytes | UInt64 | UInt32)
+        def self.<strong>new</strong>(field_number : Int32, wire_type : Int32, data : <a href="../Proto/UnknownFieldData.html">UnknownFieldData</a>)
 
-        <a class="method-permalink" href="#new%28field_number%3AInt32%2Cwire_type%3AInt32%2Cdata%3ABytes%7CUInt64%7CUInt32%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28field_number%3AInt32%2Cwire_type%3AInt32%2Cdata%3AUnknownFieldData%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L11" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/unknown_field.cr#L12" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -504,18 +514,18 @@ Preserves wire_type so the field can be faithfully re-encoded.</p>
     Instance Method Detail
   </h2>
   
-    <div class="entry-detail" id="data:Bytes|UInt64|UInt32-instance-method">
+    <div class="entry-detail" id="data:UnknownFieldData-instance-method">
       <div class="signature">
         
-        def <strong>data</strong> : Bytes | UInt64 | UInt32
+        def <strong>data</strong> : <a href="../Proto/UnknownFieldData.html">UnknownFieldData</a>
 
-        <a class="method-permalink" href="#data%3ABytes%7CUInt64%7CUInt32-instance-method">#</a>
+        <a class="method-permalink" href="#data%3AUnknownFieldData-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L9" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/unknown_field.cr#L10" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -531,7 +541,7 @@ Preserves wire_type so the field can be faithfully re-encoded.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L7" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/unknown_field.cr#L8" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -547,7 +557,7 @@ Preserves wire_type so the field can be faithfully re-encoded.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L8" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9f4f285a4967b921772294cf827c20b740508c05/src/proto/unknown_field.cr#L9" target="_blank">View source</a>]
         
       </div>
     </div>
