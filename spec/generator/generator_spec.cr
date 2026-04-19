@@ -132,6 +132,39 @@ describe Proto::Generator::TypeNameResolver do
 end
 
 describe Proto::Generator::FileGenerator do
+  it "normalizes uppercase and camelCase field names to valid Crystal identifiers" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "timing.proto"
+    file.package = "timing"
+    file.syntax = "proto3"
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "TimingEnginePeriods"
+
+    f1 = Proto::Bootstrap::FieldDescriptorProto.new
+    f1.name = "RST1"
+    f1.number = 1
+    f1.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    f1.type = Proto::Bootstrap::FieldType::TYPE_UINT32
+
+    f2 = Proto::Bootstrap::FieldDescriptorProto.new
+    f2.name = "biasVoltage"
+    f2.number = 2
+    f2.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+    f2.type = Proto::Bootstrap::FieldType::TYPE_DOUBLE
+
+    msg.field << f1 << f2
+    file.message_type << msg
+
+    index = Proto::Generator::TypeIndex.new([file])
+    generated = Proto::Generator::FileGenerator.new(file, index).generate
+
+    generated.should contain("property rst1 : UInt32 = 0")
+    generated.should contain("msg.rst1 = reader.read_uint32")
+    generated.should contain("property bias_voltage : Float64 = 0.0_f64")
+    generated.should contain("msg.bias_voltage = reader.read_double")
+  end
+
   it "escapes Crystal keyword field names" do
     file = Proto::Bootstrap::FileDescriptorProto.new
     file.name = "keyword_field.proto"

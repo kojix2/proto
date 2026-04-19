@@ -140,7 +140,7 @@ module Proto
         current_parts = current_dir.split('/')
         target_parts = target.split('/')
 
-        while current_parts.any? && target_parts.any? && current_parts.first == target_parts.first
+        while current_parts.present? && target_parts.present? && current_parts.first == target_parts.first
           current_parts.shift
           target_parts.shift
         end
@@ -320,7 +320,7 @@ module Proto
           real_oneof_indices.each do |idx|
             oneof_desc = msg.oneof_decl[idx]
             case_enum = oneof_case_enum_name(oneof_desc.name)
-            case_prop = oneof_desc.name + "_case"
+            case_prop = oneof_case_prop_name(oneof_desc.name)
             io << "#{indent}  getter #{case_prop} : #{case_enum} = #{case_enum}::NONE\n"
           end
           io << "\n"
@@ -329,7 +329,7 @@ module Proto
         tracked_presence_fields = msg.field.select { |field_desc| tracked_presence_field?(field_desc) }
         unless tracked_presence_fields.empty?
           tracked_presence_fields.each do |field_desc|
-            io << "#{indent}  getter? has_#{field_desc.name} : Bool = false\n"
+            io << "#{indent}  getter? #{field_presence_identifier(field_desc)} : Bool = false\n"
           end
           io << "\n"
         end
@@ -581,7 +581,7 @@ module Proto
           unless synthetic_oneof?(msg, oneof_index)
             if oneof = msg.oneof_decl[oneof_index]?
               case_enum = oneof_case_enum_name(oneof.name)
-              case_prop = oneof.name + "_case"
+              case_prop = oneof_case_prop_name(oneof.name)
               case_value = oneof_case_value_name(field.name)
               io << "#{indent}if #{case_prop} == #{case_enum}::#{case_value}\n"
               emit_field_encode_body(io, field, indent + "  ")
@@ -659,7 +659,7 @@ module Proto
           io << "#{indent}end\n"
         else
           if tracked_presence_field?(field)
-            io << "#{indent}if has_#{field.name}?\n"
+            io << "#{indent}if #{field_presence_identifier(field)}?\n"
             io << "#{indent}  w.write_tag(#{num}, Proto::WireType::VARINT)\n"
             io << "#{indent}  w.write_int32(#{enum_encode_value_expr(field, fname)})\n"
             io << "#{indent}end\n"
@@ -901,8 +901,8 @@ module Proto
                                      index : Int32, indent : String) : Nil
         fields = oneof_fields(msg, index)
         case_enum = oneof_case_enum_name(oneof.name)
-        case_prop = oneof.name + "_case"
-        clear_method = "clear_#{oneof.name}"
+        case_prop = oneof_case_prop_name(oneof.name)
+        clear_method = oneof_clear_method_name(oneof.name)
 
         io << "#{indent}def #{clear_method} : Nil\n"
         fields.each do |field|
@@ -936,15 +936,17 @@ module Proto
           fname = field_identifier(field)
           field_type = crystal_type_for(field)
           default = default_value_for(field)
+          clear_method = field_clear_method_name(field)
+          has_ivar = "@#{field_presence_identifier(field)}"
 
-          io << "#{indent}def clear_#{field.name} : Nil\n"
+          io << "#{indent}def #{clear_method} : Nil\n"
           io << "#{indent}  @#{fname} = #{default}\n"
-          io << "#{indent}  @has_#{field.name} = false\n"
+          io << "#{indent}  #{has_ivar} = false\n"
           io << "#{indent}end\n\n"
 
           io << "#{indent}def #{fname}=(value : #{field_type}) : #{field_type}\n"
           io << "#{indent}  @#{fname} = value\n"
-          io << "#{indent}  @has_#{field.name} = true\n"
+          io << "#{indent}  #{has_ivar} = true\n"
           io << "#{indent}  value\n"
           io << "#{indent}end\n\n"
         end
@@ -953,11 +955,11 @@ module Proto
       private def emit_derived_presence_helpers(io : IO, fields : Array(Bootstrap::FieldDescriptorProto), indent : String) : Nil
         fields.each do |field|
           fname = field_identifier(field)
-          io << "#{indent}def has_#{field.name}? : Bool\n"
+          io << "#{indent}def #{field_presence_identifier(field)}? : Bool\n"
           io << "#{indent}  !#{fname}.nil?\n"
           io << "#{indent}end\n\n"
 
-          io << "#{indent}def clear_#{field.name} : Nil\n"
+          io << "#{indent}def #{field_clear_method_name(field)} : Nil\n"
           io << "#{indent}  self.#{fname} = nil\n"
           io << "#{indent}end\n\n"
         end
@@ -983,11 +985,13 @@ module Proto
         io << "#{indent}def ==(other : self) : Bool\n"
         msg.oneof_decl.each_with_index do |oneof_desc, idx|
           next if synthetic_oneof?(msg, idx)
-          io << "#{indent}  return false unless #{oneof_desc.name}_case == other.#{oneof_desc.name}_case\n"
+          case_prop = oneof_case_prop_name(oneof_desc.name)
+          io << "#{indent}  return false unless #{case_prop} == other.#{case_prop}\n"
         end
         msg.field.each do |field|
           next unless tracked_presence_field?(field)
-          io << "#{indent}  return false unless has_#{field.name}? == other.has_#{field.name}?\n"
+          has_name = field_presence_identifier(field)
+          io << "#{indent}  return false unless #{has_name}? == other.#{has_name}?\n"
         end
         msg.field.each do |field|
           fname = field_identifier(field)
@@ -1095,7 +1099,7 @@ module Proto
         return if field.label == Bootstrap::FieldLabel::LABEL_REPEATED
 
         if tracked_presence_field?(field) || derived_presence_field?(field)
-          "has_#{field.name}?"
+          "#{field_presence_identifier(field)}?"
         end
       end
 
@@ -1114,7 +1118,7 @@ module Proto
         end
 
         if tracked_presence_field?(field)
-          io << "#{indent}if has_#{field.name}?\n"
+          io << "#{indent}if #{field_presence_identifier(field)}?\n"
           io << "#{indent}  w.write_tag(#{num}, #{wire_const})\n"
           io << "#{indent}  w.#{writer_method}(#{fname})\n"
           io << "#{indent}end\n"
@@ -1134,8 +1138,34 @@ module Proto
         crystal_identifier(field.name)
       end
 
+      private def field_presence_identifier(field : Bootstrap::FieldDescriptorProto) : String
+        "has_#{field_identifier(field)}"
+      end
+
+      private def field_clear_method_name(field : Bootstrap::FieldDescriptorProto) : String
+        "clear_#{field_identifier(field)}"
+      end
+
+      private def oneof_case_prop_name(oneof_name : String) : String
+        "#{crystal_identifier(oneof_name)}_case"
+      end
+
+      private def oneof_clear_method_name(oneof_name : String) : String
+        "clear_#{crystal_identifier(oneof_name)}"
+      end
+
       private def crystal_identifier(name : String) : String
         ident = name
+          .gsub(/([A-Z]+)([A-Z][a-z])/, "\\1_\\2")
+          .gsub(/([a-z\d])([A-Z])/, "\\1_\\2")
+          .gsub(/[^A-Za-z0-9_]/, "_")
+          .gsub(/_+/, "_")
+          .sub(/^_+/, "")
+          .sub(/_+$/, "")
+          .downcase
+
+        ident = "field" if ident.empty?
+        ident = "field_#{ident}" if ident[0].ascii_number?
         crystal_keyword?(ident) ? "#{ident}_" : ident
       end
 
