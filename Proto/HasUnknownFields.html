@@ -107,6 +107,11 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/Bootstrap/FieldOptions" data-name="proto::bootstrap::fieldoptions">
+      <a href="../Proto/Bootstrap/FieldOptions.html">FieldOptions</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/Bootstrap/FieldType" data-name="proto::bootstrap::fieldtype">
       <a href="../Proto/Bootstrap/FieldType.html">FieldType</a>
       
@@ -124,6 +129,11 @@
   
   <li class=" " data-id="proto/Proto/Bootstrap/MethodDescriptorProto" data-name="proto::bootstrap::methoddescriptorproto">
       <a href="../Proto/Bootstrap/MethodDescriptorProto.html">MethodDescriptorProto</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/MethodOptions" data-name="proto::bootstrap::methodoptions">
+      <a href="../Proto/Bootstrap/MethodOptions.html">MethodOptions</a>
       
     </li>
   
@@ -154,6 +164,11 @@
   
   <li class=" " data-id="proto/Proto/Error" data-name="proto::error">
       <a href="../Proto/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/ExtensionValue" data-name="proto::extensionvalue">
+      <a href="../Proto/ExtensionValue.html">ExtensionValue</a>
       
     </li>
   
@@ -351,11 +366,15 @@ write_unknown_fields(writer)</p>
     
       <li class="other-type"><a href="../Proto/Bootstrap/FieldDescriptorProto.html">Proto::Bootstrap::FieldDescriptorProto</a></li>
     
+      <li class="other-type"><a href="../Proto/Bootstrap/FieldOptions.html">Proto::Bootstrap::FieldOptions</a></li>
+    
       <li class="other-type"><a href="../Proto/Bootstrap/FileDescriptorProto.html">Proto::Bootstrap::FileDescriptorProto</a></li>
     
       <li class="other-type"><a href="../Proto/Bootstrap/MessageOptions.html">Proto::Bootstrap::MessageOptions</a></li>
     
       <li class="other-type"><a href="../Proto/Bootstrap/MethodDescriptorProto.html">Proto::Bootstrap::MethodDescriptorProto</a></li>
+    
+      <li class="other-type"><a href="../Proto/Bootstrap/MethodOptions.html">Proto::Bootstrap::MethodOptions</a></li>
     
       <li class="other-type"><a href="../Proto/Bootstrap/OneofDescriptorProto.html">Proto::Bootstrap::OneofDescriptorProto</a></li>
     
@@ -378,7 +397,7 @@ write_unknown_fields(writer)</p>
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/unknown_field.cr#L18" target="_blank">
+      <a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L20" target="_blank">
         proto/unknown_field.cr
       </a>
     
@@ -415,6 +434,27 @@ write_unknown_fields(writer)</p>
     
       <li class="entry-summary">
         <a href="#capture_unknown_field%28reader%3AWire%3A%3AReader%2Cfield_number%3AInt32%2Cwire_type%3AInt32%29%3ANil-instance-method" class="signature"><strong>#capture_unknown_field</strong>(reader : Wire::Reader, field_number : Int32, wire_type : Int32) : Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#extension_value%3F%28descriptor%3AT%29%3AExtensionValue%7CNilforallT-instance-method" class="signature"><strong>#extension_value?</strong>(descriptor : T) : ExtensionValue | Nil forall T</a>
+        
+          <div class="summary"><p>Returns the last matching extension value (proto singular semantics) or nil.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#extension_values%28descriptor%3AT%29%3AArray%28ExtensionValue%29forallT-instance-method" class="signature"><strong>#extension_values</strong>(descriptor : T) : Array(ExtensionValue) forall T</a>
+        
+          <div class="summary"><p>Returns all matching extension values in wire order.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_extension%3F%28descriptor%3AT%29%3ABoolforallT-instance-method" class="signature"><strong>#has_extension?</strong>(descriptor : T) : Bool forall T</a>
+        
+          <div class="summary"><p>Returns true when at least one unknown field matches the descriptor and can be decoded as an extension value.</p></div>
         
       </li>
     
@@ -469,7 +509,7 @@ write_unknown_fields(writer)</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/unknown_field.cr#L23" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L53" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -485,7 +525,71 @@ write_unknown_fields(writer)</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/unknown_field.cr#L27" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L57" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="extension_value?(descriptor:T):ExtensionValue|NilforallT-instance-method">
+      <div class="signature">
+        
+        def <strong>extension_value?</strong>(descriptor : T) : <a href="../Proto/ExtensionValue.html">ExtensionValue</a> | Nil forall T
+
+        <a class="method-permalink" href="#extension_value%3F%28descriptor%3AT%29%3AExtensionValue%7CNilforallT-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Returns the last matching extension value (proto singular semantics) or nil.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L30" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="extension_values(descriptor:T):Array(ExtensionValue)forallT-instance-method">
+      <div class="signature">
+        
+        def <strong>extension_values</strong>(descriptor : T) : Array(<a href="../Proto/ExtensionValue.html">ExtensionValue</a>) forall T
+
+        <a class="method-permalink" href="#extension_values%28descriptor%3AT%29%3AArray%28ExtensionValue%29forallT-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Returns all matching extension values in wire order.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L35" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="has_extension?(descriptor:T):BoolforallT-instance-method">
+      <div class="signature">
+        
+        def <strong>has_extension?</strong>(descriptor : T) : Bool forall T
+
+        <a class="method-permalink" href="#has_extension%3F%28descriptor%3AT%29%3ABoolforallT-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Returns true when at least one unknown field matches the descriptor and can
+be decoded as an extension value.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -501,7 +605,7 @@ write_unknown_fields(writer)</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/unknown_field.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -517,7 +621,7 @@ write_unknown_fields(writer)</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/unknown_field.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/unknown_field.cr#L76" target="_blank">View source</a>]
         
       </div>
     </div>

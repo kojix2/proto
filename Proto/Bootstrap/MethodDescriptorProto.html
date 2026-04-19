@@ -107,6 +107,11 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/Bootstrap/FieldOptions" data-name="proto::bootstrap::fieldoptions">
+      <a href="../../Proto/Bootstrap/FieldOptions.html">FieldOptions</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/Bootstrap/FieldType" data-name="proto::bootstrap::fieldtype">
       <a href="../../Proto/Bootstrap/FieldType.html">FieldType</a>
       
@@ -124,6 +129,11 @@
   
   <li class=" current" data-id="proto/Proto/Bootstrap/MethodDescriptorProto" data-name="proto::bootstrap::methoddescriptorproto">
       <a href="../../Proto/Bootstrap/MethodDescriptorProto.html">MethodDescriptorProto</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/Bootstrap/MethodOptions" data-name="proto::bootstrap::methodoptions">
+      <a href="../../Proto/Bootstrap/MethodOptions.html">MethodOptions</a>
       
     </li>
   
@@ -154,6 +164,11 @@
   
   <li class=" " data-id="proto/Proto/Error" data-name="proto::error">
       <a href="../../Proto/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/ExtensionValue" data-name="proto::extensionvalue">
+      <a href="../../Proto/ExtensionValue.html">ExtensionValue</a>
       
     </li>
   
@@ -342,7 +357,7 @@
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L295" target="_blank">
+      <a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L341" target="_blank">
         proto/bootstrap/descriptor.cr
       </a>
     
@@ -423,6 +438,16 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#options%3AMethodOptions%7CNil-instance-method" class="signature"><strong>#options</strong> : MethodOptions | Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#options%3D%28options%3AMethodOptions%7CNil%29-instance-method" class="signature"><strong>#options=</strong>(options : MethodOptions | Nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#output_type%3AString-instance-method" class="signature"><strong>#output_type</strong> : String</a>
         
       </li>
@@ -461,6 +486,21 @@
     <a href="../../Proto/HasUnknownFields.html#capture_unknown_field%28reader%3AWire%3A%3AReader%2Cfield_number%3AInt32%2Cwire_type%3AInt32%29%3ANil-instance-method" class="tooltip">
       <span>capture_unknown_field(reader : Wire::Reader, field_number : Int32, wire_type : Int32) : Nil</span>
     capture_unknown_field</a>, 
+    
+  
+    <a href="../../Proto/HasUnknownFields.html#extension_value%3F%28descriptor%3AT%29%3AExtensionValue%7CNilforallT-instance-method" class="tooltip">
+      <span>extension_value?(descriptor : T) : ExtensionValue | Nil forall T</span>
+    extension_value?</a>, 
+    
+  
+    <a href="../../Proto/HasUnknownFields.html#extension_values%28descriptor%3AT%29%3AArray%28ExtensionValue%29forallT-instance-method" class="tooltip">
+      <span>extension_values(descriptor : T) : Array(ExtensionValue) forall T</span>
+    extension_values</a>, 
+    
+  
+    <a href="../../Proto/HasUnknownFields.html#has_extension%3F%28descriptor%3AT%29%3ABoolforallT-instance-method" class="tooltip">
+      <span>has_extension?(descriptor : T) : Bool forall T</span>
+    has_extension?</a>, 
     
   
     <a href="../../Proto/HasUnknownFields.html#unknown_fields%3AArray%28UnknownField%29-instance-method" class="tooltip">
@@ -534,7 +574,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L304" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L351" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -566,7 +606,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L301" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L348" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -582,7 +622,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L301" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L348" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -598,7 +638,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L321" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L369" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -614,7 +654,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L299" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L345" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -630,7 +670,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L299" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L345" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -646,7 +686,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L298" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L344" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -662,7 +702,39 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L298" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L344" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="options:MethodOptions|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>options</strong> : <a href="../../Proto/Bootstrap/MethodOptions.html">MethodOptions</a> | Nil
+
+        <a class="method-permalink" href="#options%3AMethodOptions%7CNil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L347" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="options=(options:MethodOptions|Nil)-instance-method">
+      <div class="signature">
+        
+        def <strong>options=</strong>(options : <a href="../../Proto/Bootstrap/MethodOptions.html">MethodOptions</a> | Nil)
+
+        <a class="method-permalink" href="#options%3D%28options%3AMethodOptions%7CNil%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L347" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -678,7 +750,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L300" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L346" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -694,7 +766,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L300" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L346" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -710,7 +782,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L302" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L349" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -726,7 +798,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/6e31bf6819b8e61c1401255922c849b3205eb933/src/proto/bootstrap/descriptor.cr#L302" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/9c0f67a32c121074cbcad12b4f1e96ce4caeda3c/src/proto/bootstrap/descriptor.cr#L349" target="_blank">View source</a>]
         
       </div>
     </div>
