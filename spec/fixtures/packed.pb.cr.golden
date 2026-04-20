@@ -19,39 +19,31 @@ module Packed
         fn, wt = tag
         case fn
         when 1
-          if wt == Proto::WireType::LENGTH_DELIMITED
+          if reader.packed_wire_type?(1, wt, Proto::WireType::VARINT)
             reader.read_packed_varint { |v| msg.values << v.to_i32! }
-          elsif wt == Proto::WireType::VARINT
-            msg.values << reader.read_int32
           else
-            raise Proto::DecodeError.new("wire type mismatch for field 1: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::VARINT, got " + wt.to_s)
+            msg.values << reader.read_int32
           end
         when 2
-          if wt == Proto::WireType::LENGTH_DELIMITED
+          if reader.packed_wire_type?(2, wt, Proto::WireType::FIXED64)
             reader.read_packed_double { |v| msg.scores << v }
-          elsif wt == Proto::WireType::FIXED64
-            msg.scores << reader.read_double
           else
-            raise Proto::DecodeError.new("wire type mismatch for field 2: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::FIXED64, got " + wt.to_s)
+            msg.scores << reader.read_double
           end
         when 3
-          if wt == Proto::WireType::LENGTH_DELIMITED
+          if reader.packed_wire_type?(3, wt, Proto::WireType::VARINT)
             reader.read_packed_varint { |v| msg.flags << v != 0_u64 }
-          elsif wt == Proto::WireType::VARINT
-            msg.flags << reader.read_bool
           else
-            raise Proto::DecodeError.new("wire type mismatch for field 3: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::VARINT, got " + wt.to_s)
+            msg.flags << reader.read_bool
           end
         when 4
-          if wt == Proto::WireType::LENGTH_DELIMITED
+          if reader.packed_wire_type?(4, wt, Proto::WireType::FIXED32)
             reader.read_packed_fixed32 { |v| msg.ids << v }
-          elsif wt == Proto::WireType::FIXED32
-            msg.ids << reader.read_fixed32
           else
-            raise Proto::DecodeError.new("wire type mismatch for field 4: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::FIXED32, got " + wt.to_s)
+            msg.ids << reader.read_fixed32
           end
         else
-          msg.capture_unknown_field(reader, fn, wt)
+          msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
         end
       end
       msg

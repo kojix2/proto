@@ -19,5 +19,24 @@ module Proto
     def self.valid?(wire_type : Int32) : Bool
       VALID_VALUES.includes?(wire_type)
     end
+
+    def self.name(wire_type : Int32) : String
+      case wire_type
+      when VARINT
+        "Proto::WireType::VARINT"
+      when FIXED64
+        "Proto::WireType::FIXED64"
+      when LENGTH_DELIMITED
+        "Proto::WireType::LENGTH_DELIMITED"
+      when START_GROUP
+        "Proto::WireType::START_GROUP"
+      when END_GROUP
+        "Proto::WireType::END_GROUP"
+      when FIXED32
+        "Proto::WireType::FIXED32"
+      else
+        wire_type.to_s
+      end
+    end
   end
 end

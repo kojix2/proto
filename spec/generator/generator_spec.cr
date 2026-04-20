@@ -142,7 +142,7 @@ describe Proto::Generator::TypeNameResolver do
 
     code = Proto::Generator::FileGenerator.new(file, index, resolver).generate
     code.should contain("property payload : Custom::Empty? = nil")
-    code.should contain("msg.payload = Custom::Empty.decode_partial(reader.read_embedded)")
+    code.should contain("msg.payload = reader.read_embedded(1, wt) { |sub| Custom::Empty.decode_partial(sub) }")
   end
 
   it "ignores unrelated parameters and surrounding whitespace while parsing type_map" do
@@ -268,13 +268,10 @@ describe Proto::Generator::FileGenerator do
     index = Proto::Generator::TypeIndex.new([file])
     code = Proto::Generator::FileGenerator.new(file, index).generate
 
-    code.should contain("unless wt == Proto::WireType::VARINT")
-    code.should contain("wire type mismatch for field 1: expected Proto::WireType::VARINT, got ")
-    code.should contain("unless wt == Proto::WireType::LENGTH_DELIMITED")
-    code.should contain("wire type mismatch for field 2: expected Proto::WireType::LENGTH_DELIMITED, got ")
-    code.should contain("elsif wt == Proto::WireType::VARINT")
-    code.should contain("wire type mismatch for field 3: expected Proto::WireType::LENGTH_DELIMITED or Proto::WireType::VARINT, got ")
-    code.should contain("wire type mismatch for field 4: expected Proto::WireType::VARINT, got ")
+    code.should contain("reader.expect_wire_type!(1, wt, Proto::WireType::VARINT)")
+    code.should contain("msg.child = reader.read_embedded(2, wt) { |sub| Wireguard::Child.decode_partial(sub) }")
+    code.should contain("if reader.packed_wire_type?(3, wt, Proto::WireType::VARINT)")
+    code.should contain("reader.expect_wire_type!(4, wt, Proto::WireType::VARINT)")
   end
 
   it "normalizes lowercase enum member names to Crystal constants" do
@@ -581,7 +578,7 @@ describe Proto::Generator::FileGenerator do
     code = gen.generate
 
     code.should contain("property ratings : Hash(String, Int32) = {} of String => Int32")
-    code.should contain("entry = Maptest::Scores::RatingsEntry.decode_partial(reader.read_embedded)")
+    code.should contain("entry = reader.read_embedded(1, wt) { |sub| Maptest::Scores::RatingsEntry.decode_partial(sub) }")
     code.should contain("msg.ratings[entry.key] = entry.value")
     code.should contain("ratings.each do |k, v|")
     code.should contain("entry.key = k")
@@ -647,7 +644,7 @@ describe Proto::Generator::FileGenerator do
     code = gen.generate
 
     code.should contain("property flags : Hash(String, Maptest::Settings::FlagValue) = {} of String => Maptest::Settings::FlagValue")
-    code.should contain("entry = Maptest::Settings::FlagsEntry.decode_partial(reader.read_embedded)")
+    code.should contain("entry = reader.read_embedded(1, wt) { |sub| Maptest::Settings::FlagsEntry.decode_partial(sub) }")
     code.should contain("if value = entry.value")
     code.should contain("msg.flags[entry.key] = value")
   end
@@ -694,7 +691,7 @@ describe Proto::Generator::FileGenerator do
     code = gen.generate
 
     code.should contain("property pairs : Array(Maptest::Container::PairLike) = [] of Maptest::Container::PairLike")
-    code.should contain("msg.pairs << Maptest::Container::PairLike.decode_partial(reader.read_embedded)")
+    code.should contain("msg.pairs << reader.read_embedded(1, wt) { |sub| Maptest::Container::PairLike.decode_partial(sub) }")
     code.should contain("pairs.each do |item|")
     code.should_not contain("property pairs : Hash(")
   end
@@ -1010,7 +1007,7 @@ describe Proto::Generator::FileGenerator do
     code.should contain("def clear_child : Nil")
     code.should contain("def validate_required_deep! : Nil")
     code.should contain("raise Proto::RequiredFieldError.new(\"Missing required field: child\") unless has_child?")
-    code.should contain("msg.child = Req::Child.decode_partial(reader.read_embedded)")
+    code.should contain("msg.child = reader.read_embedded(1, wt) { |sub| Req::Child.decode_partial(sub) }")
     code.should contain("child.try &.validate_required_deep!")
     code.should contain("if _v = child")
     code.should contain("w.write_embedded(1) { |sub| _v.encode_partial(sub) }")

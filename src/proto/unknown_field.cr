@@ -55,28 +55,19 @@ module Proto
       @unknown_fields << UnknownField.new(field_number, WireType::VARINT, value)
     end
 
+    def decode_known_enum(field_number : Int32, raw_u64 : UInt64, & : Int32 ->) : Nil
+      raw = Wire::Reader.int32_from_varint(raw_u64)
+      yield raw
+    rescue ArgumentError
+      add_unknown_varint(field_number, raw_u64)
+    end
+
+    def capture_unknown_field(field : UnknownField) : Nil
+      @unknown_fields << field
+    end
+
     def capture_unknown_field(reader : Wire::Reader, field_number : Int32, wire_type : Int32) : Nil
-      case wire_type
-      when WireType::VARINT
-        v = reader.read_uint64
-        @unknown_fields << UnknownField.new(field_number, WireType::VARINT, v)
-      when WireType::FIXED64
-        v = reader.read_fixed64
-        @unknown_fields << UnknownField.new(field_number, WireType::FIXED64, v)
-      when WireType::LENGTH_DELIMITED
-        b = reader.read_bytes
-        @unknown_fields << UnknownField.new(field_number, WireType::LENGTH_DELIMITED, b)
-      when WireType::FIXED32
-        v = reader.read_fixed32
-        @unknown_fields << UnknownField.new(field_number, WireType::FIXED32, v)
-      when WireType::START_GROUP
-        nested = capture_unknown_group(reader, field_number)
-        @unknown_fields << UnknownField.new(field_number, WireType::START_GROUP, nested)
-      when WireType::END_GROUP
-        raise DecodeError.new("unexpected END_GROUP")
-      else
-        reader.skip_tag({field_number, wire_type})
-      end
+      capture_unknown_field(reader.read_unknown_field(field_number, wire_type))
     end
 
     def write_unknown_fields(writer : Wire::Writer) : Nil
@@ -97,39 +88,6 @@ module Proto
           write_unknown_group_fields(writer, d)
           writer.write_tag(unknown_field.field_number, WireType::END_GROUP)
         end
-      end
-    end
-
-    private def capture_unknown_group(reader : Wire::Reader, start_field_number : Int32) : Array(UnknownField)
-      fields = [] of UnknownField
-      loop do
-        tag = reader.read_tag || raise DecodeError.new("unexpected EOF inside group")
-        fn, wt = tag
-        if wt == WireType::END_GROUP
-          raise DecodeError.new("mismatched END_GROUP") if fn != start_field_number
-          break
-        end
-        capture_unknown_field_into(fields, reader, fn, wt)
-      end
-      fields
-    end
-
-    private def capture_unknown_field_into(fields : Array(UnknownField), reader : Wire::Reader, field_number : Int32, wire_type : Int32) : Nil
-      case wire_type
-      when WireType::VARINT
-        fields << UnknownField.new(field_number, WireType::VARINT, reader.read_uint64)
-      when WireType::FIXED64
-        fields << UnknownField.new(field_number, WireType::FIXED64, reader.read_fixed64)
-      when WireType::LENGTH_DELIMITED
-        fields << UnknownField.new(field_number, WireType::LENGTH_DELIMITED, reader.read_bytes)
-      when WireType::FIXED32
-        fields << UnknownField.new(field_number, WireType::FIXED32, reader.read_fixed32)
-      when WireType::START_GROUP
-        fields << UnknownField.new(field_number, WireType::START_GROUP, capture_unknown_group(reader, field_number))
-      when WireType::END_GROUP
-        raise DecodeError.new("unexpected END_GROUP")
-      else
-        reader.skip_tag({field_number, wire_type})
       end
     end
 

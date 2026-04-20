@@ -430,7 +430,7 @@ module Proto
         end
 
         io << "#{indent}    else\n"
-        io << "#{indent}      msg.capture_unknown_field(reader, fn, wt)\n"
+        io << "#{indent}      msg.capture_unknown_field(reader.read_unknown_field(fn, wt))\n"
         io << "#{indent}    end\n"
         io << "#{indent}  end\n"
         io << "#{indent}  msg\n"
@@ -466,10 +466,9 @@ module Proto
       end
 
       private def emit_map_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, map_entry : Bootstrap::DescriptorProto, fname : String, indent : String) : Nil
-        emit_expected_wire_type_check(io, field.number, "Proto::WireType::LENGTH_DELIMITED", indent)
         entry_type = resolve_type(field.type_name)
         value_field = map_entry.field.find { |field_desc| field_desc.name == "value" && field_desc.number == 2 }
-        io << "#{indent}entry = #{entry_type}.decode_partial(reader.read_embedded)\n"
+        io << "#{indent}entry = reader.read_embedded(#{field.number}, wt) { |sub| #{entry_type}.decode_partial(sub) }\n"
         if value_field && value_field.type == Bootstrap::FieldType::TYPE_MESSAGE
           io << "#{indent}if value = entry.value\n"
           io << "#{indent}  msg.#{fname}[entry.key] = value\n"
@@ -483,28 +482,20 @@ module Proto
         reader_method = SCALAR_READER_MAP[type]? || "read_uint64"
         packed_reader = packed_reader_for(type)
         unpacked_wire_type = SCALAR_WIRE_TYPE_MAP[type]? || "Proto::WireType::VARINT"
-        io << "#{indent}if wt == Proto::WireType::LENGTH_DELIMITED\n"
+        io << "#{indent}if reader.packed_wire_type?(#{field.number}, wt, #{unpacked_wire_type})\n"
         io << "#{indent}  reader.#{packed_reader} { |v| msg.#{fname} << #{packed_convert(type, "v")} }\n"
-        io << "#{indent}elsif wt == #{unpacked_wire_type}\n"
-        io << "#{indent}  msg.#{fname} << reader.#{reader_method}\n"
         io << "#{indent}else\n"
-        emit_wire_type_mismatch(
-          io,
-          field.number,
-          "Proto::WireType::LENGTH_DELIMITED or #{unpacked_wire_type}",
-          indent + "  "
-        )
+        io << "#{indent}  msg.#{fname} << reader.#{reader_method}\n"
         io << "#{indent}end\n"
       end
 
       private def emit_message_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, repeated : Bool, indent : String) : Nil
         fname = field_identifier(field)
         crystal_type = resolve_type(field.type_name)
-        emit_expected_wire_type_check(io, field.number, "Proto::WireType::LENGTH_DELIMITED", indent)
         if repeated
-          io << "#{indent}msg.#{fname} << #{crystal_type}.decode_partial(reader.read_embedded)\n"
+          io << "#{indent}msg.#{fname} << reader.read_embedded(#{field.number}, wt) { |sub| #{crystal_type}.decode_partial(sub) }\n"
         else
-          io << "#{indent}msg.#{fname} = #{crystal_type}.decode_partial(reader.read_embedded)\n"
+          io << "#{indent}msg.#{fname} = reader.read_embedded(#{field.number}, wt) { |sub| #{crystal_type}.decode_partial(sub) }\n"
         end
       end
 
@@ -512,62 +503,37 @@ module Proto
         fname = field_identifier(field)
         crystal_type = resolve_type(field.type_name)
         if repeated
-          io << "#{indent}if wt == Proto::WireType::LENGTH_DELIMITED\n"
+          io << "#{indent}if reader.packed_wire_type?(#{field.number}, wt, Proto::WireType::VARINT)\n"
           io << "#{indent}  reader.read_packed_varint do |v|\n"
           if open_enum_field?(field)
             io << "#{indent}    msg.#{fname} << #{open_enum_type_for(field)}.new(Proto::Wire::Reader.int32_from_varint(v))\n"
           else
-            io << "#{indent}    begin\n"
-            io << "#{indent}      msg.#{fname} << #{crystal_type}.from_value(Proto::Wire::Reader.int32_from_varint(v))\n"
-            io << "#{indent}    rescue ArgumentError\n"
-            io << "#{indent}      msg.add_unknown_varint(fn, v)\n"
-            io << "#{indent}    end\n"
+            io << "#{indent}    msg.decode_known_enum(fn, v) { |raw| msg.#{fname} << #{crystal_type}.from_value(raw) }\n"
           end
           io << "#{indent}  end\n"
-          io << "#{indent}elsif wt == Proto::WireType::VARINT\n"
+          io << "#{indent}else\n"
           io << "#{indent}  _raw_u64 = reader.read_uint64\n"
-          io << "#{indent}  _raw = Proto::Wire::Reader.int32_from_varint(_raw_u64)\n"
           if open_enum_field?(field)
+            io << "#{indent}  _raw = Proto::Wire::Reader.int32_from_varint(_raw_u64)\n"
             io << "#{indent}  msg.#{fname} << #{open_enum_type_for(field)}.new(_raw)\n"
           else
-            io << "#{indent}  begin\n"
-            io << "#{indent}    msg.#{fname} << #{crystal_type}.from_value(_raw)\n"
-            io << "#{indent}  rescue ArgumentError\n"
-            io << "#{indent}    msg.add_unknown_varint(fn, _raw_u64)\n"
-            io << "#{indent}  end\n"
+            io << "#{indent}  msg.decode_known_enum(fn, _raw_u64) { |raw| msg.#{fname} << #{crystal_type}.from_value(raw) }\n"
           end
-          io << "#{indent}else\n"
-          emit_wire_type_mismatch(
-            io,
-            field.number,
-            "Proto::WireType::LENGTH_DELIMITED or Proto::WireType::VARINT",
-            indent + "  "
-          )
           io << "#{indent}end\n"
         else
           emit_expected_wire_type_check(io, field.number, "Proto::WireType::VARINT", indent)
           io << "#{indent}_raw_u64 = reader.read_uint64\n"
-          io << "#{indent}_raw = Proto::Wire::Reader.int32_from_varint(_raw_u64)\n"
           if open_enum_field?(field)
+            io << "#{indent}_raw = Proto::Wire::Reader.int32_from_varint(_raw_u64)\n"
             io << "#{indent}msg.#{fname} = #{open_enum_type_for(field)}.new(_raw)\n"
           else
-            io << "#{indent}begin\n"
-            io << "#{indent}  msg.#{fname} = #{crystal_type}.from_value(_raw)\n"
-            io << "#{indent}rescue ArgumentError\n"
-            io << "#{indent}  msg.add_unknown_varint(fn, _raw_u64)\n"
-            io << "#{indent}end\n"
+            io << "#{indent}msg.decode_known_enum(fn, _raw_u64) { |raw| msg.#{fname} = #{crystal_type}.from_value(raw) }\n"
           end
         end
       end
 
       private def emit_expected_wire_type_check(io : IO, field_number : Int32, expected_wire_type : String, indent : String) : Nil
-        io << "#{indent}unless wt == #{expected_wire_type}\n"
-        emit_wire_type_mismatch(io, field_number, expected_wire_type, indent + "  ")
-        io << "#{indent}end\n"
-      end
-
-      private def emit_wire_type_mismatch(io : IO, field_number : Int32, expected : String, indent : String) : Nil
-        io << "#{indent}raise Proto::DecodeError.new(\"wire type mismatch for field #{field_number}: expected #{expected}, got \" + wt.to_s)\n"
+        io << "#{indent}reader.expect_wire_type!(#{field_number}, wt, #{expected_wire_type})\n"
       end
 
       # Returns the packed reader method name for a packable scalar type.

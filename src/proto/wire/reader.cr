@@ -24,6 +24,24 @@ module Proto
       # Tag
       # ---------------------------------------------------------------------------
 
+      def expect_wire_type!(field_number : Int32, wire_type : Int32, expected_wire_type : Int32) : Nil
+        return if wire_type == expected_wire_type
+        raise_wire_type_mismatch(field_number, wire_type, WireType.name(expected_wire_type))
+      end
+
+      def expect_wire_type!(field_number : Int32, wire_type : Int32, expected_wire_type : Int32, alternate_wire_type : Int32) : Nil
+        return if wire_type == expected_wire_type || wire_type == alternate_wire_type
+        expected = "#{WireType.name(expected_wire_type)} or #{WireType.name(alternate_wire_type)}"
+        raise_wire_type_mismatch(field_number, wire_type, expected)
+      end
+
+      def packed_wire_type?(field_number : Int32, wire_type : Int32, unpacked_wire_type : Int32) : Bool
+        return true if wire_type == WireType::LENGTH_DELIMITED
+        return false if wire_type == unpacked_wire_type
+        expect_wire_type!(field_number, wire_type, WireType::LENGTH_DELIMITED, unpacked_wire_type)
+        false
+      end
+
       # Read the next field tag.
       # Returns {field_number, wire_type}, or nil on clean EOF.
       def read_tag : {Int32, Int32}?
@@ -157,6 +175,11 @@ module Proto
         IO::Memory.new(read_bytes)
       end
 
+      def read_embedded(field_number : Int32, wire_type : Int32, & : IO::Memory -> T) : T forall T
+        expect_wire_type!(field_number, wire_type, WireType::LENGTH_DELIMITED)
+        yield read_embedded
+      end
+
       # ---------------------------------------------------------------------------
       # Packed repeated helpers
       # ---------------------------------------------------------------------------
@@ -226,6 +249,26 @@ module Proto
       def skip_tag(tag : {Int32, Int32}) : Nil
         field_number, wire_type = tag
         skip_field_value(field_number, wire_type)
+      end
+
+      def read_unknown_field(field_number : Int32, wire_type : Int32) : UnknownField
+        case wire_type
+        when WireType::VARINT
+          UnknownField.new(field_number, WireType::VARINT, read_uint64)
+        when WireType::FIXED64
+          UnknownField.new(field_number, WireType::FIXED64, read_fixed64)
+        when WireType::LENGTH_DELIMITED
+          UnknownField.new(field_number, WireType::LENGTH_DELIMITED, read_bytes)
+        when WireType::FIXED32
+          UnknownField.new(field_number, WireType::FIXED32, read_fixed32)
+        when WireType::START_GROUP
+          UnknownField.new(field_number, WireType::START_GROUP, read_unknown_group(field_number))
+        when WireType::END_GROUP
+          raise DecodeError.new("unexpected END_GROUP")
+        else
+          skip_tag({field_number, wire_type})
+          raise DecodeError.new("unknown wire type: #{wire_type}")
+        end
       end
 
       private def skip_field_value(field_number : Int32?, wire_type : Int32) : Nil
@@ -313,6 +356,20 @@ module Proto
         end
       end
 
+      private def read_unknown_group(start_field_number : Int32) : Array(UnknownField)
+        fields = [] of UnknownField
+        loop do
+          tag = read_tag || raise DecodeError.new("unexpected EOF inside group")
+          fn, wt = tag
+          if wt == WireType::END_GROUP
+            raise DecodeError.new("mismatched END_GROUP") if fn != start_field_number
+            break
+          end
+          fields << read_unknown_field(fn, wt)
+        end
+        fields
+      end
+
       private def skip_group(start_field_number : Int32) : Nil
         loop do
           tag = read_tag || raise DecodeError.new("unexpected EOF inside group")
@@ -334,6 +391,10 @@ module Proto
         end
       rescue OverflowError
         raise DecodeError.new("int32 out of range: #{raw}")
+      end
+
+      private def raise_wire_type_mismatch(field_number : Int32, wire_type : Int32, expected : String) : NoReturn
+        raise DecodeError.new("wire type mismatch for field #{field_number}: expected #{expected}, got #{wire_type}")
       end
     end
   end
