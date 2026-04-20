@@ -173,77 +173,62 @@ module Proto
 
       # Decode a packed repeated fixed32 field.
       def read_packed_fixed32(& : UInt32 ->) : Nil
-        sub_io = read_embedded
-        while sub_io.pos < sub_io.size
+        read_packed_fixed_values(4) do |sub_io|
           yield sub_io.read_bytes(UInt32, IO::ByteFormat::LittleEndian)
         end
-      rescue IO::EOFError
-        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated sfixed32 field.
       def read_packed_sfixed32(& : Int32 ->) : Nil
-        sub_io = read_embedded
-        while sub_io.pos < sub_io.size
+        read_packed_fixed_values(4) do |sub_io|
           yield sub_io.read_bytes(Int32, IO::ByteFormat::LittleEndian)
         end
-      rescue IO::EOFError
-        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated fixed64 field.
       def read_packed_fixed64(& : UInt64 ->) : Nil
-        sub_io = read_embedded
-        while sub_io.pos < sub_io.size
+        read_packed_fixed_values(8) do |sub_io|
           yield sub_io.read_bytes(UInt64, IO::ByteFormat::LittleEndian)
         end
-      rescue IO::EOFError
-        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated sfixed64 field.
       def read_packed_sfixed64(& : Int64 ->) : Nil
-        sub_io = read_embedded
-        while sub_io.pos < sub_io.size
+        read_packed_fixed_values(8) do |sub_io|
           yield sub_io.read_bytes(Int64, IO::ByteFormat::LittleEndian)
         end
-      rescue IO::EOFError
-        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated float field.
       def read_packed_float(& : Float32 ->) : Nil
-        sub_io = read_embedded
-        while sub_io.pos < sub_io.size
+        read_packed_fixed_values(4) do |sub_io|
           yield sub_io.read_bytes(Float32, IO::ByteFormat::LittleEndian)
         end
-      rescue IO::EOFError
-        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated double field.
       def read_packed_double(& : Float64 ->) : Nil
-        sub_io = read_embedded
-        while sub_io.pos < sub_io.size
+        read_packed_fixed_values(8) do |sub_io|
           yield sub_io.read_bytes(Float64, IO::ByteFormat::LittleEndian)
         end
-      rescue IO::EOFError
-        raise DecodeError.new("unexpected EOF")
       end
 
       # ---------------------------------------------------------------------------
       # Skip
       # ---------------------------------------------------------------------------
 
-      # Skip one field value of the given wire type.
-      # Handles groups recursively (deprecated but must be skippable).
+      # Skip one untagged field value of the given wire type.
       def skip_field(wire_type : Int32) : Nil
-        skip_field(wire_type, nil)
+        skip_field_value(nil, wire_type)
       end
 
-      # Skip one field value of the given wire type for a known field number.
-      # Passing field_number enables strict START_GROUP/END_GROUP matching.
-      def skip_field(wire_type : Int32, field_number : Int32?) : Nil
+      # Skip one tagged field value with strict START_GROUP/END_GROUP matching.
+      def skip_tag(tag : {Int32, Int32}) : Nil
+        field_number, wire_type = tag
+        skip_field_value(field_number, wire_type)
+      end
+
+      private def skip_field_value(field_number : Int32?, wire_type : Int32) : Nil
         case wire_type
         when WireType::VARINT
           read_varint
@@ -319,6 +304,15 @@ module Proto
         end
       end
 
+      private def read_packed_fixed_values(byte_size : Int32, & : IO::Memory ->) : Nil
+        sub_io = read_embedded
+        while sub_io.pos < sub_io.size
+          remaining = sub_io.size - sub_io.pos
+          raise DecodeError.new("unexpected EOF") if remaining < byte_size
+          yield sub_io
+        end
+      end
+
       private def skip_group(start_field_number : Int32) : Nil
         loop do
           tag = read_tag || raise DecodeError.new("unexpected EOF inside group")
@@ -327,7 +321,7 @@ module Proto
             raise DecodeError.new("mismatched END_GROUP") if fn != start_field_number
             break
           end
-          skip_field(wt, fn)
+          skip_tag({fn, wt})
         end
       end
 

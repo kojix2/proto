@@ -487,7 +487,7 @@ describe "Proto::Wire::Reader / Writer" do
       fn.should eq 96
       wt.should eq Proto::WireType::START_GROUP
       expect_raises(Proto::DecodeError, /mismatched END_GROUP/) do
-        reader.skip_field(wt, fn)
+        reader.skip_tag({fn, wt})
       end
     end
 
@@ -505,7 +505,7 @@ describe "Proto::Wire::Reader / Writer" do
       tag.should_not be_nil
       fn, wt = tag.as({Int32, Int32})
       expect_raises(Proto::DecodeError, /mismatched END_GROUP/) do
-        reader.skip_field(wt, fn)
+        reader.skip_tag({fn, wt})
       end
     end
   end
@@ -528,11 +528,11 @@ describe "Proto::Wire::Reader / Writer" do
       name = ""
       age = 0_i32
       while tag = r.read_tag
-        fn, wt = tag
+        fn, _wt = tag
         case fn
         when 1 then name = r.read_string
         when 2 then age = r.read_int32
-        else        r.skip_field(wt, fn)
+        else        r.skip_tag(tag)
         end
       end
 
@@ -588,7 +588,7 @@ describe "Proto::Wire::Reader / Writer" do
         when Proto::WireType::VARINT
           fields[fn] = r2.read_uint64
         else
-          r2.skip_field(wt, fn)
+          r2.skip_tag(tag)
         end
       end
       fields[99]?.should eq 1234_u64
@@ -636,7 +636,7 @@ describe "Proto::Wire::Reader / Writer" do
           wt.should eq Proto::WireType::LENGTH_DELIMITED
           payload = r2.read_string
         else
-          r2.skip_field(wt, fn)
+          r2.skip_tag(tag)
         end
       end
       payload.should eq "opaque"
@@ -684,7 +684,7 @@ describe "Proto::Wire::Reader / Writer" do
           wt.should eq Proto::WireType::FIXED32
           value = r2.read_fixed32
         else
-          r2.skip_field(wt, fn)
+          r2.skip_tag(tag)
         end
       end
       value.should eq 0xDEADBEEF_u32

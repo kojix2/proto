@@ -75,7 +75,7 @@ module Proto
       when WireType::END_GROUP
         raise DecodeError.new("unexpected END_GROUP")
       else
-        reader.skip_field(wire_type, field_number)
+        reader.skip_tag({field_number, wire_type})
       end
     end
 
@@ -129,7 +129,7 @@ module Proto
       when WireType::END_GROUP
         raise DecodeError.new("unexpected END_GROUP")
       else
-        reader.skip_field(wire_type, field_number)
+        reader.skip_tag({field_number, wire_type})
       end
     end
 
