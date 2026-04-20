@@ -407,7 +407,7 @@ write_unknown_fields(writer)</p>
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/unknown_field.cr#L21" target="_blank">
+      <a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L21" target="_blank">
         proto/unknown_field.cr
       </a>
     
@@ -444,6 +444,16 @@ write_unknown_fields(writer)</p>
     
       <li class="entry-summary">
         <a href="#capture_unknown_field%28reader%3AWire%3A%3AReader%2Cfield_number%3AInt32%2Cwire_type%3AInt32%29%3ANil-instance-method" class="signature"><strong>#capture_unknown_field</strong>(reader : Wire::Reader, field_number : Int32, wire_type : Int32) : Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#capture_unknown_field%28field%3AUnknownField%29%3ANil-instance-method" class="signature"><strong>#capture_unknown_field</strong>(field : UnknownField) : Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#decode_known_enum%28field_number%3AInt32%2Craw_u64%3AUInt64%2C%26%3AInt32-%3E%29%3ANil-instance-method" class="signature"><strong>#decode_known_enum</strong>(field_number : Int32, raw_u64 : UInt64, & : Int32 -> ) : Nil</a>
         
       </li>
     
@@ -519,7 +529,7 @@ write_unknown_fields(writer)</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/unknown_field.cr#L54" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L54" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -535,7 +545,39 @@ write_unknown_fields(writer)</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/unknown_field.cr#L58" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L69" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="capture_unknown_field(field:UnknownField):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>capture_unknown_field</strong>(field : <a href="../Proto/UnknownField.html">UnknownField</a>) : Nil
+
+        <a class="method-permalink" href="#capture_unknown_field%28field%3AUnknownField%29%3ANil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L65" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="decode_known_enum(field_number:Int32,raw_u64:UInt64,&amp;:Int32-&gt;):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>decode_known_enum</strong>(field_number : Int32, raw_u64 : UInt64, & : Int32 -> ) : Nil
+
+        <a class="method-permalink" href="#decode_known_enum%28field_number%3AInt32%2Craw_u64%3AUInt64%2C%26%3AInt32-%3E%29%3ANil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -556,7 +598,7 @@ write_unknown_fields(writer)</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/unknown_field.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -577,7 +619,7 @@ write_unknown_fields(writer)</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/unknown_field.cr#L36" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L36" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -599,7 +641,7 @@ be decoded as an extension value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/unknown_field.cr#L26" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L26" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -615,7 +657,7 @@ be decoded as an extension value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/unknown_field.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L22" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -631,7 +673,7 @@ be decoded as an extension value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/unknown_field.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/e965832c645db91fbb019022ed7bfd4b8d560c34/src/proto/unknown_field.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
