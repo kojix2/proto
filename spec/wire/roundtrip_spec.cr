@@ -508,6 +508,43 @@ describe "Proto::Wire::Reader / Writer" do
         reader.skip_tag({fn, wt})
       end
     end
+
+    it "skips a nested group and continues with the next field" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_tag(96, Proto::WireType::START_GROUP)
+      writer.write_tag(10, Proto::WireType::START_GROUP)
+      writer.write_tag(1, Proto::WireType::VARINT)
+      writer.write_uint64(9_u64)
+      writer.write_tag(10, Proto::WireType::END_GROUP)
+      writer.write_tag(96, Proto::WireType::END_GROUP)
+      writer.write_int32(55)
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io)
+      tag = reader.read_tag
+      tag.should_not be_nil
+      fn, wt = tag.as({Int32, Int32})
+      reader.skip_tag({fn, wt})
+      reader.read_int32.should eq 55
+    end
+
+    it "raises when EOF occurs before END_GROUP in skip_field" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_tag(96, Proto::WireType::START_GROUP)
+      writer.write_tag(1, Proto::WireType::VARINT)
+      writer.write_uint64(7_u64)
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io)
+      tag = reader.read_tag
+      tag.should_not be_nil
+      fn, wt = tag.as({Int32, Int32})
+      expect_raises(Proto::DecodeError, /unexpected EOF inside group/) do
+        reader.skip_tag({fn, wt})
+      end
+    end
   end
 
   describe "full message round-trip (hand-written)" do
@@ -751,6 +788,24 @@ describe "Proto::Wire::Reader / Writer" do
       tag.should_not be_nil
       fn, wt = tag.as({Int32, Int32})
       expect_raises(Proto::DecodeError, /mismatched END_GROUP/) do
+        mock_msg.capture_unknown_field(reader, fn, wt)
+      end
+    end
+
+    it "raises for unexpected EOF while capturing unknown group" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_tag(96, Proto::WireType::START_GROUP)
+      writer.write_tag(1, Proto::WireType::VARINT)
+      writer.write_uint64(77_u64)
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io)
+      mock_msg = Proto::HasUnknownFieldsCapture.new
+      tag = reader.read_tag
+      tag.should_not be_nil
+      fn, wt = tag.as({Int32, Int32})
+      expect_raises(Proto::DecodeError, /unexpected EOF inside group/) do
         mock_msg.capture_unknown_field(reader, fn, wt)
       end
     end
