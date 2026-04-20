@@ -367,7 +367,7 @@ All other read methods raise DecodeError on unexpected EOF.</p>
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L8" target="_blank">
+      <a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L8" target="_blank">
         proto/wire/reader.cr
       </a>
     
@@ -603,16 +603,16 @@ All other read methods raise DecodeError on unexpected EOF.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#skip_field%28wire_type%3AInt32%2Cfield_number%3AInt32%7CNil%29%3ANil-instance-method" class="signature"><strong>#skip_field</strong>(wire_type : Int32, field_number : Int32 | Nil) : Nil</a>
+        <a href="#skip_field%28wire_type%3AInt32%29%3ANil-instance-method" class="signature"><strong>#skip_field</strong>(wire_type : Int32) : Nil</a>
         
-          <div class="summary"><p>Skip one field value of the given wire type for a known field number.</p></div>
+          <div class="summary"><p>Skip one untagged field value of the given wire type.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#skip_field%28wire_type%3AInt32%29%3ANil-instance-method" class="signature"><strong>#skip_field</strong>(wire_type : Int32) : Nil</a>
+        <a href="#skip_tag%28tag%3ATuple%28Int32%2CInt32%29%29%3ANil-instance-method" class="signature"><strong>#skip_tag</strong>(tag : Tuple(Int32, Int32)) : Nil</a>
         
-          <div class="summary"><p>Skip one field value of the given wire type.</p></div>
+          <div class="summary"><p>Skip one tagged field value with strict START_GROUP/END_GROUP matching.</p></div>
         
       </li>
     
@@ -684,7 +684,7 @@ All other read methods raise DecodeError on unexpected EOF.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L15" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -712,7 +712,7 @@ All other read methods raise DecodeError on unexpected EOF.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L334" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L328" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -742,7 +742,7 @@ All other read methods raise DecodeError on unexpected EOF.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L80" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L80" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -758,7 +758,7 @@ All other read methods raise DecodeError on unexpected EOF.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L140" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L140" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -774,7 +774,7 @@ All other read methods raise DecodeError on unexpected EOF.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L128" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L128" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -796,7 +796,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L156" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L156" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -812,7 +812,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L88" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L88" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -828,7 +828,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L104" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L104" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -844,7 +844,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L120" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L120" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -865,7 +865,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L52" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L52" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -881,7 +881,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -902,7 +902,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L225" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L210" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -923,7 +923,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L175" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -944,7 +944,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L195" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L189" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -965,7 +965,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L215" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L203" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -986,7 +986,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L185" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L182" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1007,7 +1007,7 @@ The bytes are consumed from this reader immediately.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L196" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1029,7 +1029,7 @@ Yields each decoded UInt64 raw value; callers convert as needed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L166" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L166" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1045,7 +1045,7 @@ Yields each decoded UInt64 raw value; callers convert as needed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L96" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1061,7 +1061,7 @@ Yields each decoded UInt64 raw value; callers convert as needed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L112" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L112" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1082,7 +1082,7 @@ Yields each decoded UInt64 raw value; callers convert as needed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L70" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1098,7 +1098,7 @@ Yields each decoded UInt64 raw value; callers convert as needed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L75" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1114,7 +1114,7 @@ Yields each decoded UInt64 raw value; callers convert as needed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L150" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L150" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1136,7 +1136,7 @@ Returns {field_number, wire_type}, or nil on clean EOF.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L29" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1157,7 +1157,7 @@ Returns {field_number, wire_type}, or nil on clean EOF.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L61" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1173,29 +1173,7 @@ Returns {field_number, wire_type}, or nil on clean EOF.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L65" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="skip_field(wire_type:Int32,field_number:Int32|Nil):Nil-instance-method">
-      <div class="signature">
-        
-        def <strong>skip_field</strong>(wire_type : Int32, field_number : Int32 | Nil) : Nil
-
-        <a class="method-permalink" href="#skip_field%28wire_type%3AInt32%2Cfield_number%3AInt32%7CNil%29%3ANil-instance-method">#</a>
-      </div>
-      
-        <div class="doc">
-          
-          <p>Skip one field value of the given wire type for a known field number.
-Passing field_number enables strict START_GROUP/END_GROUP matching.</p>
-        </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L246" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1210,14 +1188,34 @@ Passing field_number enables strict START_GROUP/END_GROUP matching.</p>
       
         <div class="doc">
           
-          <p>Skip one field value of the given wire type.
-Handles groups recursively (deprecated but must be skippable).</p>
+          <p>Skip one untagged field value of the given wire type.</p>
         </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/56d76a2c5e6ca13eacf5bff8b3323258d382f7de/src/proto/wire/reader.cr#L240" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L221" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="skip_tag(tag:Tuple(Int32,Int32)):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>skip_tag</strong>(tag : Tuple(Int32, Int32)) : Nil
+
+        <a class="method-permalink" href="#skip_tag%28tag%3ATuple%28Int32%2CInt32%29%29%3ANil-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Skip one tagged field value with strict START_GROUP/END_GROUP matching.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/7ce690a1645f324a86364fe78ffed2b45d342591/src/proto/wire/reader.cr#L226" target="_blank">View source</a>]
         
       </div>
     </div>
