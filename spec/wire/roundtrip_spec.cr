@@ -445,6 +445,69 @@ describe "Proto::Wire::Reader / Writer" do
       reader.skip_field(Proto::WireType::LENGTH_DELIMITED)
       reader.read_int32.should eq 55
     end
+
+    it "enforces max_message_size while skipping length-delimited fields" do
+      io = IO::Memory.new
+      Proto::Wire::Writer.new(io).write_string("abc")
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io, max_message_size: 3)
+      expect_raises(Proto::DecodeError, /message exceeds max size/) do
+        reader.skip_field(Proto::WireType::LENGTH_DELIMITED)
+      end
+    end
+
+    it "enforces max_message_size while skipping fixed32 fields" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_fixed32(0xDEADBEEF_u32)
+      writer.write_fixed32(0xCAFEBABE_u32)
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io, max_message_size: 7)
+      reader.skip_field(Proto::WireType::FIXED32)
+      expect_raises(Proto::DecodeError, /message exceeds max size/) do
+        reader.skip_field(Proto::WireType::FIXED32)
+      end
+    end
+
+    it "raises when END_GROUP field number does not match in skip_field" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_tag(96, Proto::WireType::START_GROUP)
+      writer.write_tag(1, Proto::WireType::VARINT)
+      writer.write_uint64(7_u64)
+      writer.write_tag(97, Proto::WireType::END_GROUP)
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io)
+      tag = reader.read_tag
+      tag.should_not be_nil
+      fn, wt = tag.as({Int32, Int32})
+      fn.should eq 96
+      wt.should eq Proto::WireType::START_GROUP
+      expect_raises(Proto::DecodeError, /mismatched END_GROUP/) do
+        reader.skip_field(wt, fn)
+      end
+    end
+
+    it "detects nested END_GROUP mismatch in skip_field" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_tag(96, Proto::WireType::START_GROUP)
+      writer.write_tag(10, Proto::WireType::START_GROUP)
+      writer.write_tag(11, Proto::WireType::END_GROUP)
+      writer.write_tag(96, Proto::WireType::END_GROUP)
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io)
+      tag = reader.read_tag
+      tag.should_not be_nil
+      fn, wt = tag.as({Int32, Int32})
+      expect_raises(Proto::DecodeError, /mismatched END_GROUP/) do
+        reader.skip_field(wt, fn)
+      end
+    end
   end
 
   describe "full message round-trip (hand-written)" do
@@ -469,7 +532,7 @@ describe "Proto::Wire::Reader / Writer" do
         case fn
         when 1 then name = r.read_string
         when 2 then age = r.read_int32
-        else        r.skip_field(wt)
+        else        r.skip_field(wt, fn)
         end
       end
 
@@ -525,7 +588,7 @@ describe "Proto::Wire::Reader / Writer" do
         when Proto::WireType::VARINT
           fields[fn] = r2.read_uint64
         else
-          r2.skip_field(wt)
+          r2.skip_field(wt, fn)
         end
       end
       fields[99]?.should eq 1234_u64
@@ -573,7 +636,7 @@ describe "Proto::Wire::Reader / Writer" do
           wt.should eq Proto::WireType::LENGTH_DELIMITED
           payload = r2.read_string
         else
-          r2.skip_field(wt)
+          r2.skip_field(wt, fn)
         end
       end
       payload.should eq "opaque"
@@ -621,7 +684,7 @@ describe "Proto::Wire::Reader / Writer" do
           wt.should eq Proto::WireType::FIXED32
           value = r2.read_fixed32
         else
-          r2.skip_field(wt)
+          r2.skip_field(wt, fn)
         end
       end
       value.should eq 0xDEADBEEF_u32
@@ -671,6 +734,25 @@ describe "Proto::Wire::Reader / Writer" do
       end_tag = group_end.as({Int32, Int32})
       end_tag[0].should eq 96
       end_tag[1].should eq Proto::WireType::END_GROUP
+    end
+
+    it "raises for mismatched END_GROUP while capturing unknown group" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_tag(96, Proto::WireType::START_GROUP)
+      writer.write_tag(1, Proto::WireType::VARINT)
+      writer.write_uint64(77_u64)
+      writer.write_tag(97, Proto::WireType::END_GROUP)
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io)
+      mock_msg = Proto::HasUnknownFieldsCapture.new
+      tag = reader.read_tag
+      tag.should_not be_nil
+      fn, wt = tag.as({Int32, Int32})
+      expect_raises(Proto::DecodeError, /mismatched END_GROUP/) do
+        mock_msg.capture_unknown_field(reader, fn, wt)
+      end
     end
   end
 
@@ -731,6 +813,36 @@ describe "Proto::Wire::Reader / Writer" do
       result = [] of UInt32
       r.read_packed_fixed32 { |v| result << v }
       result.should eq values
+    end
+
+    it "raises DecodeError for malformed packed fixed32 payload" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_tag(4, Proto::WireType::LENGTH_DELIMITED)
+      writer.write_varint(3_u64)
+      io.write(Bytes[0x01, 0x02, 0x03])
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io)
+      reader.read_tag.should_not be_nil
+      expect_raises(Proto::DecodeError, /unexpected EOF/) do
+        reader.read_packed_fixed32 { |_| }
+      end
+    end
+
+    it "raises DecodeError for malformed packed double payload" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_tag(5, Proto::WireType::LENGTH_DELIMITED)
+      writer.write_varint(7_u64)
+      io.write(Bytes[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07])
+      io.rewind
+
+      reader = Proto::Wire::Reader.new(io)
+      reader.read_tag.should_not be_nil
+      expect_raises(Proto::DecodeError, /unexpected EOF/) do
+        reader.read_packed_double { |_| }
+      end
     end
 
     it "skips empty packed field" do

@@ -70,12 +70,12 @@ module Proto
         v = reader.read_fixed32
         @unknown_fields << UnknownField.new(field_number, WireType::FIXED32, v)
       when WireType::START_GROUP
-        nested = capture_unknown_group(reader)
+        nested = capture_unknown_group(reader, field_number)
         @unknown_fields << UnknownField.new(field_number, WireType::START_GROUP, nested)
       when WireType::END_GROUP
         raise DecodeError.new("unexpected END_GROUP")
       else
-        reader.skip_field(wire_type)
+        reader.skip_field(wire_type, field_number)
       end
     end
 
@@ -100,11 +100,15 @@ module Proto
       end
     end
 
-    private def capture_unknown_group(reader : Wire::Reader) : Array(UnknownField)
+    private def capture_unknown_group(reader : Wire::Reader, start_field_number : Int32) : Array(UnknownField)
       fields = [] of UnknownField
-      while tag = reader.read_tag
+      loop do
+        tag = reader.read_tag || raise DecodeError.new("unexpected EOF inside group")
         fn, wt = tag
-        break if wt == WireType::END_GROUP
+        if wt == WireType::END_GROUP
+          raise DecodeError.new("mismatched END_GROUP") if fn != start_field_number
+          break
+        end
         capture_unknown_field_into(fields, reader, fn, wt)
       end
       fields
@@ -121,11 +125,11 @@ module Proto
       when WireType::FIXED32
         fields << UnknownField.new(field_number, WireType::FIXED32, reader.read_fixed32)
       when WireType::START_GROUP
-        fields << UnknownField.new(field_number, WireType::START_GROUP, capture_unknown_group(reader))
+        fields << UnknownField.new(field_number, WireType::START_GROUP, capture_unknown_group(reader, field_number))
       when WireType::END_GROUP
         raise DecodeError.new("unexpected END_GROUP")
       else
-        reader.skip_field(wire_type)
+        reader.skip_field(wire_type, field_number)
       end
     end
 

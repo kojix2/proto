@@ -177,6 +177,8 @@ module Proto
         while sub_io.pos < sub_io.size
           yield sub_io.read_bytes(UInt32, IO::ByteFormat::LittleEndian)
         end
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated sfixed32 field.
@@ -185,6 +187,8 @@ module Proto
         while sub_io.pos < sub_io.size
           yield sub_io.read_bytes(Int32, IO::ByteFormat::LittleEndian)
         end
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated fixed64 field.
@@ -193,6 +197,8 @@ module Proto
         while sub_io.pos < sub_io.size
           yield sub_io.read_bytes(UInt64, IO::ByteFormat::LittleEndian)
         end
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated sfixed64 field.
@@ -201,6 +207,8 @@ module Proto
         while sub_io.pos < sub_io.size
           yield sub_io.read_bytes(Int64, IO::ByteFormat::LittleEndian)
         end
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated float field.
@@ -209,6 +217,8 @@ module Proto
         while sub_io.pos < sub_io.size
           yield sub_io.read_bytes(Float32, IO::ByteFormat::LittleEndian)
         end
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       # Decode a packed repeated double field.
@@ -217,6 +227,8 @@ module Proto
         while sub_io.pos < sub_io.size
           yield sub_io.read_bytes(Float64, IO::ByteFormat::LittleEndian)
         end
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       # ---------------------------------------------------------------------------
@@ -226,6 +238,12 @@ module Proto
       # Skip one field value of the given wire type.
       # Handles groups recursively (deprecated but must be skippable).
       def skip_field(wire_type : Int32) : Nil
+        skip_field(wire_type, nil)
+      end
+
+      # Skip one field value of the given wire type for a known field number.
+      # Passing field_number enables strict START_GROUP/END_GROUP matching.
+      def skip_field(wire_type : Int32, field_number : Int32?) : Nil
         case wire_type
         when WireType::VARINT
           read_varint
@@ -233,18 +251,17 @@ module Proto
           @io.skip(8)
           consume_bytes!(8)
         when WireType::LENGTH_DELIMITED
-          @io.skip(read_length)
+          len = read_length
+          @io.skip(len)
+          consume_bytes!(len.to_i64)
         when WireType::START_GROUP
-          loop do
-            tag = read_tag || raise DecodeError.new("unexpected EOF inside group")
-            _, wt = tag
-            break if wt == WireType::END_GROUP
-            skip_field(wt)
-          end
+          start_field_number = field_number || raise DecodeError.new("START_GROUP requires field number")
+          skip_group(start_field_number)
         when WireType::END_GROUP
           # Caller already consumed the END_GROUP tag; nothing to skip.
         when WireType::FIXED32
           @io.skip(4)
+          consume_bytes!(4)
         else
           raise DecodeError.new("unknown wire type: #{wire_type}")
         end
@@ -299,6 +316,18 @@ module Proto
         @bytes_read += count
         if @bytes_read > @max_message_size
           raise DecodeError.new("message exceeds max size: #{@bytes_read} > #{@max_message_size}")
+        end
+      end
+
+      private def skip_group(start_field_number : Int32) : Nil
+        loop do
+          tag = read_tag || raise DecodeError.new("unexpected EOF inside group")
+          fn, wt = tag
+          if wt == WireType::END_GROUP
+            raise DecodeError.new("mismatched END_GROUP") if fn != start_field_number
+            break
+          end
+          skip_field(wt, fn)
         end
       end
 
