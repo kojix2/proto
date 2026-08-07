@@ -216,6 +216,32 @@ describe Proto::Generator::FileGenerator do
     generated.should contain("if !alias_.empty?")
   end
 
+  it "keeps normalized unknown_fields names distinct" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "unknown_fields.proto"
+    file.package = "reserved"
+    file.syntax = "proto3"
+
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Sample"
+    {"unknown_fields", "unknown_fields_"}.each_with_index do |name, index|
+      field = Proto::Bootstrap::FieldDescriptorProto.new
+      field.name = name
+      field.number = index + 1
+      field.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+      field.type = Proto::Bootstrap::FieldType::TYPE_STRING
+      msg.field << field
+    end
+    file.message_type << msg
+
+    generated = Proto::Generator::FileGenerator.new(
+      file, Proto::Generator::TypeIndex.new([file])
+    ).generate
+
+    generated.should contain("property unknown_fields_ : String")
+    generated.should contain("property unknown_fields__2 : String")
+  end
+
   it "emits wire type guards for known fields during decode" do
     file = Proto::Bootstrap::FileDescriptorProto.new
     file.name = "wire_guard.proto"

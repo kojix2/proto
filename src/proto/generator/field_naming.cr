@@ -5,7 +5,9 @@ module Proto
         identifier = crystal_identifier(field.name)
         # Proto::Message exposes this runtime API. Escaping the schema field
         # keeps valid protobuf names from producing conflicting Crystal methods.
-        identifier == "unknown_fields" ? "unknown_fields_" : identifier
+        return identifier unless identifier == "unknown_fields"
+        return "unknown_fields_" if field.name == "unknown_fields"
+        "unknown_fields__#{field.number}"
       end
 
       private def field_presence_identifier(field : Bootstrap::FieldDescriptorProto) : String
