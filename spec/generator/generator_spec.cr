@@ -645,8 +645,7 @@ describe Proto::Generator::FileGenerator do
 
     code.should contain("property flags : Hash(String, Maptest::Settings::FlagValue) = {} of String => Maptest::Settings::FlagValue")
     code.should contain("entry = reader.read_embedded(1, wt) { |sub| Maptest::Settings::FlagsEntry.decode_partial(sub) }")
-    code.should contain("if value = entry.value")
-    code.should contain("msg.flags[entry.key] = value")
+    code.should contain("msg.flags[entry.key] = entry.value || Maptest::Settings::FlagValue.new")
   end
 
   it "does not treat repeated message as map unless map_entry option is true" do

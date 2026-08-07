@@ -470,9 +470,8 @@ module Proto
         value_field = map_entry.field.find { |field_desc| field_desc.name == "value" && field_desc.number == 2 }
         io << "#{indent}entry = reader.read_embedded(#{field.number}, wt) { |sub| #{entry_type}.decode_partial(sub) }\n"
         if value_field && value_field.type == Bootstrap::FieldType::TYPE_MESSAGE
-          io << "#{indent}if value = entry.value\n"
-          io << "#{indent}  msg.#{fname}[entry.key] = value\n"
-          io << "#{indent}end\n"
+          value_type = base_crystal_type(value_field)
+          io << "#{indent}msg.#{fname}[entry.key] = entry.value || #{value_type}.new\n"
         else
           io << "#{indent}msg.#{fname}[entry.key] = entry.value\n"
         end
