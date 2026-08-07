@@ -396,11 +396,14 @@ module Proto
         fname = field_identifier(field)
         crystal_type = crystal_type_for(field)
         default = default_value_for(field)
+        bool_property = crystal_type == "Bool"
+        io << "#{indent}# ameba:disable Naming/QueryBoolMethods\n" if bool_property
         if real_oneof_field?(field, msg) || tracked_presence_field?(field)
           io << "#{indent}getter #{fname} : #{crystal_type} = #{default}\n"
         else
           io << "#{indent}property #{fname} : #{crystal_type} = #{default}\n"
         end
+        io << "#{indent}# ameba:enable Naming/QueryBoolMethods\n" if bool_property
       end
 
       private def emit_decode(io : IO, msg : Bootstrap::DescriptorProto, indent : String) : Nil
