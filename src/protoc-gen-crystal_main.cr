@@ -16,20 +16,25 @@ request = Proto::Bootstrap::CodeGeneratorRequest.decode(IO::Memory.new(request_b
 response = Proto::Bootstrap::CodeGeneratorResponse.new
 response.supported_features = Proto::Bootstrap::FEATURE_PROTO3_OPTIONAL
 
-# Build type index from all proto_file entries in the request.
-index = Proto::Generator::TypeIndex.new(request.proto_file)
-resolver = Proto::Generator::TypeNameResolver.build(request.parameter, request.proto_file)
+begin
+  # Build type index from all proto_file entries in the request.
+  index = Proto::Generator::TypeIndex.new(request.proto_file)
+  resolver = Proto::Generator::TypeNameResolver.build(request.parameter, request.proto_file)
 
-# Generate code for each requested file.
-request.file_to_generate.each do |fname|
-  proto_file = request.proto_file.find { |file_desc| file_desc.name == fname }
-  next unless proto_file
+  # Generate code for each requested file.
+  request.file_to_generate.each do |fname|
+    proto_file = request.proto_file.find { |file_desc| file_desc.name == fname }
+    next unless proto_file
 
-  generator = Proto::Generator::FileGenerator.new(proto_file, index, resolver)
-  out_file = Proto::Bootstrap::CodeGeneratorResponseFile.new
-  out_file.name = generator.output_name
-  out_file.content = generator.generate
-  response.file << out_file
+    generator = Proto::Generator::FileGenerator.new(proto_file, index, resolver)
+    out_file = Proto::Bootstrap::CodeGeneratorResponseFile.new
+    out_file.name = generator.output_name
+    out_file.content = generator.generate
+    response.file << out_file
+  end
+rescue ex
+  response.file.clear
+  response.error = ex.message || ex.class.name
 end
 
 STDOUT.write(response.encode)
