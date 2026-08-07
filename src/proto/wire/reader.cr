@@ -303,9 +303,8 @@ module Proto
       # Pass a block to handle clean EOF on the *first* byte (e.g., for read_tag).
       private def read_varint?(&) : UInt64
         result = 0_u64
-        shift = 0
         first = true
-        loop do
+        10.times do |index|
           byte = @io.read_byte
           if byte.nil?
             if first
@@ -318,11 +317,15 @@ module Proto
           first = false
           consume_bytes!(1)
           b = byte.to_u64
-          result |= (b & 0x7F) << shift
-          shift += 7
+          # A UInt64 varint may use ten bytes, but byte ten contains only the
+          # 64th payload bit and must terminate the value.
+          if index == 9 && (b & 0xFE) != 0
+            raise DecodeError.new("varint overflow")
+          end
+          result |= (b & 0x7F) << (index * 7)
           return result if (b & 0x80) == 0
-          raise DecodeError.new("varint overflow") if shift >= 64
         end
+        raise DecodeError.new("varint overflow")
       end
 
       private def read_varint : UInt64

@@ -69,6 +69,18 @@ describe "Proto::Wire::Reader / Writer" do
       end
     end
 
+    it "rejects payload bits above UInt64 in the tenth byte" do
+      [0x02_u8, 0x7f_u8].each do |last|
+        bytes = Bytes[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, last]
+        expect_raises(Proto::DecodeError, /varint overflow/) { decode_varint(bytes) }
+      end
+    end
+
+    it "accepts the maximum valid ten-byte varint" do
+      bytes = Bytes[0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01]
+      decode_varint(bytes).should eq(UInt64::MAX)
+    end
+
     it "raises on truncated varint" do
       reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[0x80]))
       expect_raises(Proto::DecodeError, /unexpected EOF in varint/) do
