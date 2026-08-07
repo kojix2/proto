@@ -3,6 +3,18 @@ require "file_utils"
 require "../../src/proto/bootstrap/plugin"
 
 describe "Proto::Bootstrap" do
+  it "round-trips explicit packed field options including false" do
+    [false, true].each do |packed|
+      options = Proto::Bootstrap::FieldOptions.new
+      options.packed = packed
+      io = IO::Memory.new
+      options.encode(io)
+      decoded = Proto::Bootstrap::FieldOptions.decode(IO::Memory.new(io.to_slice))
+      decoded.packed.should eq(packed)
+    end
+    Proto::Bootstrap::FieldOptions.new.packed.should be_nil
+  end
+
   describe "CodeGeneratorRequest round-trip" do
     it "decodes an empty request" do
       req = Proto::Bootstrap::CodeGeneratorRequest.decode(IO::Memory.new(Bytes.empty))

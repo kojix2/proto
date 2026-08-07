@@ -63,18 +63,30 @@ module Proto
     class FieldOptions
       include HasUnknownFields
 
+      # `packed` has presence: false explicitly overrides proto3's packed
+      # default, while nil means that the syntax default applies.
+      property packed : Bool? = nil
+
       def self.decode(io : IO) : self
         msg = new
         reader = Wire::Reader.new(io)
         while tag = reader.read_tag
           fn, wt = tag
-          msg.capture_unknown_field(reader, fn, wt)
+          case fn
+          when 2 then msg.packed = reader.read_bool
+          else        msg.capture_unknown_field(reader, fn, wt)
+          end
         end
         msg
       end
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
+        packed_value = packed
+        unless packed_value.nil?
+          w.write_tag(2, WireType::VARINT)
+          w.write_bool(packed_value)
+        end
         write_unknown_fields(w)
       end
     end
