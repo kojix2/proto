@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package regressions;
+
+message Nested {
+  int32 first = 1;
+  string second = 2;
+  repeated int32 values = 3;
+  Child child = 4;
+
+  message Child {
+    string left = 1;
+    string right = 2;
+  }
+}
+
+message Wrapper {
+  optional bool flag = 1;
+  Nested nested = 2;
+  map<string, Nested> entries = 3;
+  repeated int32 unpacked = 4 [packed = false];
+  repeated int32 packed = 5;
+  string unknown_fields = 6;
+}

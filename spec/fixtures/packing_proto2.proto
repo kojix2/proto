@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+package regressions;
+
+message Proto2Packing {
+  repeated int32 unpacked = 1;
+  repeated int32 packed = 2 [packed = true];
+}
