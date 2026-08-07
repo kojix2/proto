@@ -2,7 +2,10 @@ module Proto
   module Generator
     module FieldNaming
       private def field_identifier(field : Bootstrap::FieldDescriptorProto) : String
-        crystal_identifier(field.name)
+        identifier = crystal_identifier(field.name)
+        # Proto::Message exposes this runtime API. Escaping the schema field
+        # keeps valid protobuf names from producing conflicting Crystal methods.
+        identifier == "unknown_fields" ? "unknown_fields_" : identifier
       end
 
       private def field_presence_identifier(field : Bootstrap::FieldDescriptorProto) : String
