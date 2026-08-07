@@ -975,7 +975,7 @@ module Proto
         fname = field_identifier(field)
         type = field.type
         num = field.number
-        io << "#{indent}if _v = #{fname}\n"
+        io << "#{indent}unless (_v = #{fname}).nil?\n"
         if type == Bootstrap::FieldType::TYPE_MESSAGE
           io << "#{indent}  w.write_embedded(#{num}) { |sub| _v.encode_partial(sub) }\n"
         elsif type == Bootstrap::FieldType::TYPE_ENUM

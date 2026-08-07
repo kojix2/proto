@@ -733,7 +733,7 @@ describe Proto::Generator::FileGenerator do
     code.should_not contain("_CountCase")
     code.should_not contain("count_case")
     # encode should guard with nil check
-    code.should contain("if _v = count")
+    code.should contain("unless (_v = count).nil?")
     code.should contain("w.write_int32(_v)")
     # == method must be generated
     code.should contain("def ==(other : self) : Bool")
