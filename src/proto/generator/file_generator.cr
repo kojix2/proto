@@ -648,20 +648,12 @@ module Proto
           end
         elsif type == Bootstrap::FieldType::TYPE_ENUM
           emit_enum_field_encode(io, field, repeated, num, indent)
-        elsif repeated && PACKABLE_TYPES.includes?(type)
-          # proto3: emit packed
-          if type == Bootstrap::FieldType::TYPE_ENUM
-            io << "#{indent}w.write_packed(#{num}) do |buf|\n"
-            io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
-            io << "#{indent}  #{fname}.each { |item| sub.write_int32(#{enum_encode_value_expr(field, "item")}) }\n"
-            io << "#{indent}end\n"
-          else
-            writer_method = SCALAR_WRITER_MAP[type]? || "write_uint64"
-            io << "#{indent}w.write_packed(#{num}) do |buf|\n"
-            io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
-            io << "#{indent}  #{fname}.each { |item| sub.#{writer_method}(item) }\n"
-            io << "#{indent}end\n"
-          end
+        elsif repeated && PACKABLE_TYPES.includes?(type) && packed_field?(field)
+          writer_method = SCALAR_WRITER_MAP[type]? || "write_uint64"
+          io << "#{indent}w.write_packed(#{num}) do |buf|\n"
+          io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
+          io << "#{indent}  #{fname}.each { |item| sub.#{writer_method}(item) }\n"
+          io << "#{indent}end\n"
         else
           emit_scalar_field_encode(io, field, repeated, num, indent)
         end
@@ -669,10 +661,15 @@ module Proto
 
       private def emit_enum_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto, repeated : Bool, num : Int32, indent : String) : Nil
         fname = field_identifier(field)
-        if repeated
+        if repeated && packed_field?(field)
           io << "#{indent}w.write_packed(#{num}) do |buf|\n"
           io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
           io << "#{indent}  #{fname}.each { |item| sub.write_int32(#{enum_encode_value_expr(field, "item")}) }\n"
+          io << "#{indent}end\n"
+        elsif repeated
+          io << "#{indent}#{fname}.each do |item|\n"
+          io << "#{indent}  w.write_tag(#{num}, Proto::WireType::VARINT)\n"
+          io << "#{indent}  w.write_int32(#{enum_encode_value_expr(field, "item")})\n"
           io << "#{indent}end\n"
         else
           if tracked_presence_field?(field)
@@ -991,6 +988,12 @@ module Proto
           io << "#{indent}  w.#{writer_method}(_v)\n"
         end
         io << "#{indent}end\n"
+      end
+
+      private def packed_field?(field : Bootstrap::FieldDescriptorProto) : Bool
+        explicit = field.options.try(&.packed)
+        return explicit unless explicit.nil?
+        @file.syntax == "proto3"
       end
 
       private def emit_scalar_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto,
