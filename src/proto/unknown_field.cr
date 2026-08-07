@@ -40,6 +40,14 @@ module Proto
       values = [] of ExtensionValue
       unknown_fields.each do |unknown_field|
         next unless unknown_field.field_number == descriptor.number
+
+        if descriptor.label == Bootstrap::FieldLabel::LABEL_REPEATED &&
+           unknown_field.wire_type == WireType::LENGTH_DELIMITED &&
+           packable_extension_type?(descriptor.type)
+          values.concat(decode_packed_extension_values(unknown_field, descriptor.type))
+          next
+        end
+
         next unless unknown_field.wire_type == expected_wire_type
 
         value = decode_extension_value(unknown_field, descriptor.type)
@@ -48,6 +56,64 @@ module Proto
 
       values
     end
+
+    private def packable_extension_type?(field_type : Bootstrap::FieldType) : Bool
+      case field_type
+      when Bootstrap::FieldType::TYPE_DOUBLE,
+           Bootstrap::FieldType::TYPE_FLOAT,
+           Bootstrap::FieldType::TYPE_INT64,
+           Bootstrap::FieldType::TYPE_UINT64,
+           Bootstrap::FieldType::TYPE_INT32,
+           Bootstrap::FieldType::TYPE_FIXED64,
+           Bootstrap::FieldType::TYPE_FIXED32,
+           Bootstrap::FieldType::TYPE_BOOL,
+           Bootstrap::FieldType::TYPE_UINT32,
+           Bootstrap::FieldType::TYPE_ENUM,
+           Bootstrap::FieldType::TYPE_SFIXED32,
+           Bootstrap::FieldType::TYPE_SFIXED64,
+           Bootstrap::FieldType::TYPE_SINT32,
+           Bootstrap::FieldType::TYPE_SINT64
+        true
+      else
+        false
+      end
+    end
+
+    # ameba:disable Metrics/CyclomaticComplexity
+    private def decode_packed_extension_values(field : UnknownField, field_type : Bootstrap::FieldType) : Array(ExtensionValue)
+      data = field.data
+      return [] of ExtensionValue unless data.is_a?(Bytes)
+
+      io = IO::Memory.new(data)
+      reader = Wire::Reader.new(io)
+      values = [] of ExtensionValue
+      while io.pos < io.size
+        value = case field_type
+                when Bootstrap::FieldType::TYPE_DOUBLE   then reader.read_double
+                when Bootstrap::FieldType::TYPE_FLOAT    then reader.read_float
+                when Bootstrap::FieldType::TYPE_INT64    then reader.read_int64
+                when Bootstrap::FieldType::TYPE_UINT64   then reader.read_uint64
+                when Bootstrap::FieldType::TYPE_INT32    then reader.read_int32
+                when Bootstrap::FieldType::TYPE_FIXED64  then reader.read_fixed64
+                when Bootstrap::FieldType::TYPE_FIXED32  then reader.read_fixed32
+                when Bootstrap::FieldType::TYPE_BOOL     then reader.read_bool
+                when Bootstrap::FieldType::TYPE_UINT32   then reader.read_uint32
+                when Bootstrap::FieldType::TYPE_ENUM     then reader.read_int32
+                when Bootstrap::FieldType::TYPE_SFIXED32 then reader.read_sfixed32
+                when Bootstrap::FieldType::TYPE_SFIXED64 then reader.read_sfixed64
+                when Bootstrap::FieldType::TYPE_SINT32   then reader.read_sint32
+                when Bootstrap::FieldType::TYPE_SINT64   then reader.read_sint64
+                else
+                  return [] of ExtensionValue
+                end
+        values << value
+      end
+      values
+    rescue DecodeError
+      [] of ExtensionValue
+    end
+
+    # ameba:enable Metrics/CyclomaticComplexity
 
     # Append a raw unknown varint value when a field cannot be decoded semantically
     # (for example, unknown enum numeric values under strict enum APIs).

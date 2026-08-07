@@ -457,6 +457,52 @@ describe Proto::Message do
       msg.has_extension?(extension).should be_true
       msg.extension_value?(extension).should eq("demo")
     end
+
+    it "reads mixed packed and unpacked repeated varint extensions" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io)
+      writer.write_packed(50_004) do |buf|
+        packed = Proto::Wire::Writer.new(buf)
+        packed.write_int32(10)
+        packed.write_int32(20)
+      end
+      writer.write_tag(50_004, Proto::WireType::VARINT)
+      writer.write_int32(30)
+
+      descriptor = Proto::Bootstrap::FieldDescriptorProto.new
+      descriptor.number = 50_004
+      descriptor.label = Proto::Bootstrap::FieldLabel::LABEL_REPEATED
+      descriptor.type = Proto::Bootstrap::FieldType::TYPE_INT32
+      PingMessage.decode(io.to_slice).extension_values(descriptor).should eq([10, 20, 30])
+    end
+
+    it "reads packed fixed-width and enum extensions" do
+      fixed_io = IO::Memory.new
+      fixed_writer = Proto::Wire::Writer.new(fixed_io)
+      fixed_writer.write_packed(50_005) do |buf|
+        packed = Proto::Wire::Writer.new(buf)
+        packed.write_fixed32(1_u32)
+        packed.write_fixed32(UInt32::MAX)
+      end
+      fixed = Proto::Bootstrap::FieldDescriptorProto.new
+      fixed.number = 50_005
+      fixed.label = Proto::Bootstrap::FieldLabel::LABEL_REPEATED
+      fixed.type = Proto::Bootstrap::FieldType::TYPE_FIXED32
+      PingMessage.decode(fixed_io.to_slice).extension_values(fixed).should eq([1_u32, UInt32::MAX])
+
+      enum_io = IO::Memory.new
+      enum_writer = Proto::Wire::Writer.new(enum_io)
+      enum_writer.write_packed(50_006) do |buf|
+        packed = Proto::Wire::Writer.new(buf)
+        packed.write_int32(1)
+        packed.write_int32(2)
+      end
+      enum_desc = Proto::Bootstrap::FieldDescriptorProto.new
+      enum_desc.number = 50_006
+      enum_desc.label = Proto::Bootstrap::FieldLabel::LABEL_REPEATED
+      enum_desc.type = Proto::Bootstrap::FieldType::TYPE_ENUM
+      PingMessage.decode(enum_io.to_slice).extension_values(enum_desc).should eq([1, 2])
+    end
   end
 
   describe "required field presence" do
