@@ -23,10 +23,12 @@ module Simple
 
     property name : String = ""
     property age : Int32 = 0
+    # ameba:disable Naming/QueryBoolMethods
     property active : Bool = false
-    property status : Proto::OpenEnum(Simple::Status) = Proto::OpenEnum(Simple::Status).new(0)
+    # ameba:enable Naming/QueryBoolMethods
+    property status : Proto::OpenEnum(Status) = Proto::OpenEnum(Status).new(0)
     property tags : Array(String) = [] of String
-    property address : Simple::Address? = nil
+    property address : Address? = nil
 
     def has_address? : Bool
       !address.nil?
@@ -64,12 +66,22 @@ module Simple
           reader.expect_wire_type!(4, wt, Proto::WireType::VARINT)
           _raw_u64 = reader.read_uint64
           _raw = Proto::Wire::Reader.int32_from_varint(_raw_u64)
-          msg.status = Proto::OpenEnum(Simple::Status).new(_raw)
+          msg.status = Proto::OpenEnum(Status).new(_raw)
         when 5
           reader.expect_wire_type!(5, wt, Proto::WireType::LENGTH_DELIMITED)
           msg.tags << reader.read_string
         when 6
-          msg.address = reader.read_embedded(6, wt) { |sub| Simple::Address.decode_partial(sub) }
+          msg.address = reader.read_embedded(6, wt) do |sub|
+            if current = msg.address
+              merged = IO::Memory.new
+              current.encode_partial(merged)
+              IO.copy(sub, merged)
+              merged.rewind
+              Address.decode_partial(merged)
+            else
+              Address.decode_partial(sub)
+            end
+          end
         else
           msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
         end

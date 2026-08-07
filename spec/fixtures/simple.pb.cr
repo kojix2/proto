@@ -8,6 +8,14 @@ module Simple
     STATUS_UNKNOWN = 0
     STATUS_OK      = 1
     STATUS_ERROR   = 2
+
+    def self.from_raw?(raw : Int32) : self?
+      case raw
+      when 0 then STATUS_UNKNOWN
+      when 1 then STATUS_OK
+      when 2 then STATUS_ERROR
+      end
+    end
   end
 
   class Person
@@ -15,57 +23,119 @@ module Simple
 
     property name : String = ""
     property age : Int32 = 0
-    property? active : Bool = false
-    property status : Simple::Status = Simple::Status.new(0)
+    # ameba:disable Naming/QueryBoolMethods
+    property active : Bool = false
+    # ameba:enable Naming/QueryBoolMethods
+    property status : Proto::OpenEnum(Status) = Proto::OpenEnum(Status).new(0)
     property tags : Array(String) = [] of String
-    property address : Simple::Address = Simple::Address.new
+    property address : Address? = nil
 
-    def self.decode(io : IO) : self
+    def has_address? : Bool
+      !address.nil?
+    end
+
+    def clear_address : Nil
+      self.address = nil
+    end
+
+    def validate_required! : Nil
+    end
+
+    def validate_required_deep! : Nil
+      validate_required!
+      address.try &.validate_required_deep!
+    end
+
+    def self.decode_partial(io : IO) : self
       msg = new
       reader = Proto::Wire::Reader.new(io)
       while tag = reader.read_tag
         fn, wt = tag
         case fn
         when 1
+          reader.expect_wire_type!(1, wt, Proto::WireType::LENGTH_DELIMITED)
           msg.name = reader.read_string
         when 2
+          reader.expect_wire_type!(2, wt, Proto::WireType::VARINT)
           msg.age = reader.read_int32
         when 3
+          reader.expect_wire_type!(3, wt, Proto::WireType::VARINT)
           msg.active = reader.read_bool
         when 4
-          _raw = reader.read_int32
-          begin
-            msg.status = Simple::Status.from_value(_raw)
-          rescue ArgumentError
-            msg.add_unknown_varint(fn, _raw.to_u64!)
-          end
+          reader.expect_wire_type!(4, wt, Proto::WireType::VARINT)
+          _raw_u64 = reader.read_uint64
+          _raw = Proto::Wire::Reader.int32_from_varint(_raw_u64)
+          msg.status = Proto::OpenEnum(Status).new(_raw)
         when 5
+          reader.expect_wire_type!(5, wt, Proto::WireType::LENGTH_DELIMITED)
           msg.tags << reader.read_string
         when 6
-          msg.address = Simple::Address.decode(reader.read_embedded)
+          msg.address = reader.read_embedded(6, wt) do |sub|
+            if current = msg.address
+              merged = IO::Memory.new
+              current.encode_partial(merged)
+              IO.copy(sub, merged)
+              merged.rewind
+              Address.decode_partial(merged)
+            else
+              Address.decode_partial(sub)
+            end
+          end
         else
-          msg.capture_unknown_field(reader, fn, wt)
+          msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
         end
       end
       msg
     end
 
-    def encode(io : IO) : Nil
+    def self.decode(io : IO) : self
+      msg = decode_partial(io)
+      msg.validate_required_deep!
+      msg
+    end
+
+    def encode_partial(io : IO) : Nil
       w = Proto::Wire::Writer.new(io)
-      w.write_tag(1, Proto::WireType::LENGTH_DELIMITED)
-      w.write_string(name)
-      w.write_tag(2, Proto::WireType::VARINT)
-      w.write_int32(age)
-      w.write_tag(3, Proto::WireType::VARINT)
-      w.write_bool(active?)
-      w.write_tag(4, Proto::WireType::VARINT)
-      w.write_int32(status.value)
+      if !name.empty?
+        w.write_tag(1, Proto::WireType::LENGTH_DELIMITED)
+        w.write_string(name)
+      end
+      if age != 0
+        w.write_tag(2, Proto::WireType::VARINT)
+        w.write_int32(age)
+      end
+      if active
+        w.write_tag(3, Proto::WireType::VARINT)
+        w.write_bool(active)
+      end
+      if status.raw != 0
+        w.write_tag(4, Proto::WireType::VARINT)
+        w.write_int32(status.raw)
+      end
       tags.each do |item|
         w.write_tag(5, Proto::WireType::LENGTH_DELIMITED)
         w.write_string(item)
       end
-      w.write_embedded(6) { |sub| address.encode(sub) }
+      if _v = address
+        w.write_embedded(6) { |sub| _v.encode_partial(sub) }
+      end
       write_unknown_fields(w)
+    end
+
+    def encode(io : IO) : Nil
+      validate_required_deep!
+      encode_partial(io)
+    end
+
+    def ==(other : self) : Bool
+      return false unless name == other.name
+      return false unless age == other.age
+      return false unless active == other.active
+      return false unless status == other.status
+      return false unless tags == other.tags
+      return false unless address == other.address
+      return false unless unknown_fields == other.unknown_fields
+      true
     end
   end
 
@@ -75,30 +145,52 @@ module Simple
     property street : String = ""
     property city : String = ""
 
-    def self.decode(io : IO) : self
+    def self.decode_partial(io : IO) : self
       msg = new
       reader = Proto::Wire::Reader.new(io)
       while tag = reader.read_tag
         fn, wt = tag
         case fn
         when 1
+          reader.expect_wire_type!(1, wt, Proto::WireType::LENGTH_DELIMITED)
           msg.street = reader.read_string
         when 2
+          reader.expect_wire_type!(2, wt, Proto::WireType::LENGTH_DELIMITED)
           msg.city = reader.read_string
         else
-          msg.capture_unknown_field(reader, fn, wt)
+          msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
         end
       end
       msg
     end
 
-    def encode(io : IO) : Nil
+    def self.decode(io : IO) : self
+      msg = decode_partial(io)
+      msg
+    end
+
+    def encode_partial(io : IO) : Nil
       w = Proto::Wire::Writer.new(io)
-      w.write_tag(1, Proto::WireType::LENGTH_DELIMITED)
-      w.write_string(street)
-      w.write_tag(2, Proto::WireType::LENGTH_DELIMITED)
-      w.write_string(city)
+      if !street.empty?
+        w.write_tag(1, Proto::WireType::LENGTH_DELIMITED)
+        w.write_string(street)
+      end
+      if !city.empty?
+        w.write_tag(2, Proto::WireType::LENGTH_DELIMITED)
+        w.write_string(city)
+      end
       write_unknown_fields(w)
+    end
+
+    def encode(io : IO) : Nil
+      encode_partial(io)
+    end
+
+    def ==(other : self) : Bool
+      return false unless street == other.street
+      return false unless city == other.city
+      return false unless unknown_fields == other.unknown_fields
+      true
     end
   end
 end

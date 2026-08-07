@@ -441,7 +441,8 @@ describe Proto::Generator::FileGenerator do
     file.message_type << address
 
     index = Proto::Generator::TypeIndex.new([file])
-    gen = Proto::Generator::FileGenerator.new(file, index)
+    resolver = Proto::Generator::TypeNameResolver.build("", [file])
+    gen = Proto::Generator::FileGenerator.new(file, index, resolver)
 
     golden_path = File.join(__DIR__, "../fixtures/simple.pb.cr.golden")
     golden = File.read(golden_path)

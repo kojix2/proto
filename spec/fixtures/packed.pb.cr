@@ -12,44 +12,49 @@ module Packed
     property flags : Array(Bool) = [] of Bool
     property ids : Array(UInt32) = [] of UInt32
 
-    def self.decode(io : IO) : self
+    def self.decode_partial(io : IO) : self
       msg = new
       reader = Proto::Wire::Reader.new(io)
       while tag = reader.read_tag
         fn, wt = tag
         case fn
         when 1
-          if wt == Proto::WireType::LENGTH_DELIMITED
+          if reader.packed_wire_type?(1, wt, Proto::WireType::VARINT)
             reader.read_packed_varint { |v| msg.values << v.to_i32! }
           else
             msg.values << reader.read_int32
           end
         when 2
-          if wt == Proto::WireType::LENGTH_DELIMITED
+          if reader.packed_wire_type?(2, wt, Proto::WireType::FIXED64)
             reader.read_packed_double { |v| msg.scores << v }
           else
             msg.scores << reader.read_double
           end
         when 3
-          if wt == Proto::WireType::LENGTH_DELIMITED
+          if reader.packed_wire_type?(3, wt, Proto::WireType::VARINT)
             reader.read_packed_varint { |v| msg.flags << v != 0_u64 }
           else
             msg.flags << reader.read_bool
           end
         when 4
-          if wt == Proto::WireType::LENGTH_DELIMITED
+          if reader.packed_wire_type?(4, wt, Proto::WireType::FIXED32)
             reader.read_packed_fixed32 { |v| msg.ids << v }
           else
             msg.ids << reader.read_fixed32
           end
         else
-          msg.capture_unknown_field(reader, fn, wt)
+          msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
         end
       end
       msg
     end
 
-    def encode(io : IO) : Nil
+    def self.decode(io : IO) : self
+      msg = decode_partial(io)
+      msg
+    end
+
+    def encode_partial(io : IO) : Nil
       w = Proto::Wire::Writer.new(io)
       w.write_packed(1) do |buf|
         sub = Proto::Wire::Writer.new(buf)
@@ -68,6 +73,19 @@ module Packed
         ids.each { |item| sub.write_fixed32(item) }
       end
       write_unknown_fields(w)
+    end
+
+    def encode(io : IO) : Nil
+      encode_partial(io)
+    end
+
+    def ==(other : self) : Bool
+      return false unless values == other.values
+      return false unless scores == other.scores
+      return false unless flags == other.flags
+      return false unless ids == other.ids
+      return false unless unknown_fields == other.unknown_fields
+      true
     end
   end
 end
