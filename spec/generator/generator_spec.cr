@@ -142,7 +142,8 @@ describe Proto::Generator::TypeNameResolver do
 
     code = Proto::Generator::FileGenerator.new(file, index, resolver).generate
     code.should contain("property payload : Custom::Empty? = nil")
-    code.should contain("msg.payload = reader.read_embedded(1, wt) { |sub| Custom::Empty.decode_partial(sub) }")
+    code.should contain("msg.payload = reader.read_embedded(1, wt) do |sub|")
+    code.should contain("Custom::Empty.decode_partial(merged)")
   end
 
   it "ignores unrelated parameters and surrounding whitespace while parsing type_map" do
@@ -269,7 +270,8 @@ describe Proto::Generator::FileGenerator do
     code = Proto::Generator::FileGenerator.new(file, index).generate
 
     code.should contain("reader.expect_wire_type!(1, wt, Proto::WireType::VARINT)")
-    code.should contain("msg.child = reader.read_embedded(2, wt) { |sub| Wireguard::Child.decode_partial(sub) }")
+    code.should contain("msg.child = reader.read_embedded(2, wt) do |sub|")
+    code.should contain("Wireguard::Child.decode_partial(merged)")
     code.should contain("if reader.packed_wire_type?(3, wt, Proto::WireType::VARINT)")
     code.should contain("reader.expect_wire_type!(4, wt, Proto::WireType::VARINT)")
   end
@@ -1006,7 +1008,8 @@ describe Proto::Generator::FileGenerator do
     code.should contain("def clear_child : Nil")
     code.should contain("def validate_required_deep! : Nil")
     code.should contain("raise Proto::RequiredFieldError.new(\"Missing required field: child\") unless has_child?")
-    code.should contain("msg.child = reader.read_embedded(1, wt) { |sub| Req::Child.decode_partial(sub) }")
+    code.should contain("msg.child = reader.read_embedded(1, wt) do |sub|")
+    code.should contain("Req::Child.decode_partial(merged)")
     code.should contain("child.try &.validate_required_deep!")
     code.should contain("if _v = child")
     code.should contain("w.write_embedded(1) { |sub| _v.encode_partial(sub) }")

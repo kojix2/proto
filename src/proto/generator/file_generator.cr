@@ -494,7 +494,17 @@ module Proto
         if repeated
           io << "#{indent}msg.#{fname} << reader.read_embedded(#{field.number}, wt) { |sub| #{crystal_type}.decode_partial(sub) }\n"
         else
-          io << "#{indent}msg.#{fname} = reader.read_embedded(#{field.number}, wt) { |sub| #{crystal_type}.decode_partial(sub) }\n"
+          io << "#{indent}msg.#{fname} = reader.read_embedded(#{field.number}, wt) do |sub|\n"
+          io << "#{indent}  if current = msg.#{fname}\n"
+          io << "#{indent}    merged = IO::Memory.new\n"
+          io << "#{indent}    current.encode_partial(merged)\n"
+          io << "#{indent}    IO.copy(sub, merged)\n"
+          io << "#{indent}    merged.rewind\n"
+          io << "#{indent}    #{crystal_type}.decode_partial(merged)\n"
+          io << "#{indent}  else\n"
+          io << "#{indent}    #{crystal_type}.decode_partial(sub)\n"
+          io << "#{indent}  end\n"
+          io << "#{indent}end\n"
         end
       end
 
