@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package regressions;
+
+message Floats {
+  float ratio = 1;
+  double gain = 2;
+}
