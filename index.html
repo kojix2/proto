@@ -318,128 +318,55 @@
     <use href="#octicon-link"/>
   </svg>
 </a>proto.cr</h1>
-<p><a href="https://github.com/kojix2/proto/actions/workflows/test.yml"><img src="https://github.com/kojix2/proto/actions/workflows/test.yml/badge.svg" alt="Test" /></a>
-<a href="https://tokei.kojix2.net/github/kojix2/proto"><img src="https://img.shields.io/endpoint?url=https://tokei.kojix2.net/badge/github/kojix2/proto/lines" alt="Lines of Code" /></a></p>
-<p>📦 <a href="https://protobuf.dev/">Protobuf</a> runtime and protoc plugin for Crystal.</p>
-<p>This library was generated using an AI agent.</p>
+<p><a href="https://github.com/kojix2/proto/actions/workflows/test.yml"><img src="https://github.com/kojix2/proto/actions/workflows/test.yml/badge.svg" alt="Test" /></a></p>
+<p>Protocol Buffers runtime and message-code generator for Crystal &gt;= 1.9.
+Supports unknown fields, enums, oneof, maps, field presence and extensions.
+Use <a href="https://github.com/kojix2/grpc">grpc.cr</a> for RPC client/server stubs.</p>
 <h2><a id="installation" class="anchor" href="#installation">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
 </a>Installation</h2>
+<p>Add to your application's <code>shard.yml</code>, then run <code>shards install</code>:</p>
 <pre><code class="language-yaml">dependencies:
   proto:
     github: kojix2/proto</code></pre>
-<h2><a id="build-plugin" class="anchor" href="#build-plugin">
+<h2><a id="generate-and-use-messages" class="anchor" href="#generate-and-use-messages">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
-</a>Build plugin</h2>
-<pre><code class="language-sh">shards build</code></pre>
-<h2><a id="generate-.pb.cr" class="anchor" href="#generate-.pb.cr">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>Generate .pb.cr</h2>
-<pre><code class="language-sh">protoc --plugin=protoc-gen-crystal=bin/protoc-gen-crystal \
-  --crystal_out=. path/to/example.proto</code></pre>
-<p>Generated .pb.cr files include:</p>
-<ul>
-<li>message / enum definitions</li>
-<li>RPC metadata for each service</li>
-<li>extension metadata at file and message scope</li>
-</ul>
-<p>Client/server stubs are not generated for services themselves. For gRPC stubs, use grpc.cr's protoc-gen-crystal-grpc.</p>
-<h2><a id="runtime-usage" class="anchor" href="#runtime-usage">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>Runtime usage</h2>
-<pre><code class="language-crystal"><span class="k">require</span> <span class="s">&quot;proto&quot;</span>
-<span class="k">require</span> <span class="s">&quot;./example.pb.cr&quot;</span>
+</a>Generate and use messages</h2>
+<p>Install <code>protoc</code>. In your application, save this as <code>greeting.proto</code>:</p>
+<pre><code class="language-proto">syntax = &quot;proto3&quot;;
+package example;
+message Greeting { string text = 1; }</code></pre>
+<pre><code class="language-sh">mkdir -p bin
+crystal build lib/proto/src/protoc-gen-crystal_main.cr -o bin/protoc-gen-crystal
+protoc --plugin=protoc-gen-crystal=bin/protoc-gen-crystal --crystal_out=. greeting.proto</code></pre>
+<pre><code class="language-crystal"><span class="k">require</span> <span class="s">&quot;./greeting.pb&quot;</span>
 
-msg <span class="o">=</span> <span class="t">Example</span><span class="t">::</span><span class="t">HelloRequest</span>.new
-msg.name <span class="o">=</span> <span class="s">&quot;Alice&quot;</span>
-
-bytes <span class="o">=</span> msg.encode
-parsed <span class="o">=</span> <span class="t">Example</span><span class="t">::</span><span class="t">HelloRequest</span>.decode(bytes)
-puts parsed.name</code></pre>
-<p>Generated message types expose two wire-level API layers:</p>
-<ul>
-<li><code>decode</code> / <code>encode</code>: strict APIs that validate required fields across the full message tree</li>
-<li><code>decode_partial</code> / <code>encode_partial</code>: explicit partial APIs for working with incomplete messages</li>
-</ul>
-<p>Strict validation failures raise <code><a href="Proto/RequiredFieldError.html">Proto::RequiredFieldError</a></code>, which is a <code><a href="Proto/ValidationError.html">Proto::ValidationError</a></code>.</p>
-<pre><code class="language-crystal"><span class="k">begin</span>
-  parsed <span class="o">=</span> <span class="t">Example</span><span class="t">::</span><span class="t">Settings</span>.decode(bytes)
-<span class="k">rescue</span> ex : <span class="t">Proto</span><span class="t">::</span><span class="t">RequiredFieldError</span>
-  puts ex.message
-<span class="k">end</span></code></pre>
-<p>For proto2-style required fields, generated code keeps the value surface non-nilable where practical
-and exposes presence separately:</p>
-<pre><code class="language-crystal">settings <span class="o">=</span> <span class="t">Example</span><span class="t">::</span><span class="t">Settings</span>.new
-settings.retries <span class="o">=</span> <span class="n">3</span>
-settings.has_retries? <span class="c"># =&gt; true</span>
-settings.clear_retries
-settings.has_retries? <span class="c"># =&gt; false</span></code></pre>
-<h2><a id="examples" class="anchor" href="#examples">
+message <span class="o">=</span> <span class="t">Example</span><span class="t">::</span><span class="t">Greeting</span>.new
+message.text <span class="o">=</span> <span class="s">&quot;Hello&quot;</span>
+puts <span class="t">Example</span><span class="t">::</span><span class="t">Greeting</span>.decode(message.encode).text</code></pre>
+<p><code>encode</code> / <code>decode</code> validate required fields throughout the message tree and
+raise <code><a href="Proto/RequiredFieldError.html">Proto::RequiredFieldError</a></code> when a required value is missing. Use
+<code>encode_partial</code> / <code>decode_partial</code> explicitly for incomplete messages.
+Presence is exposed through generated <code>has_*?</code> and <code>clear_*</code> methods.</p>
+<p>Wire readers default to 64 MiB per message and 8 MiB per length-delimited field.
+Malformed lengths and field numbers raise <code><a href="Proto/DecodeError.html">Proto::DecodeError</a></code>.</p>
+<h2><a id="development" class="anchor" href="#development">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
-</a>Examples</h2>
-<p>Minimal self-contained example:</p>
-<pre><code class="language-sh">crystal run examples/basic_roundtrip.cr</code></pre>
-<p>Example output:</p>
-<pre><code class="language-text">encoded bytes: 9
-decoded id: 42
-decoded name: Alice</code></pre>
-<p>Strict vs partial required-field example:</p>
-<pre><code class="language-sh">crystal run examples/required_strict_partial.cr</code></pre>
-<p>Example output:</p>
-<pre><code class="language-text">strict encode error: Missing required field: value
-partial bytes: 2
-strict decode error: Missing required field: value
-partial child present?: true
-partial child has_value?: false</code></pre>
-<p>Example for service metadata / extension metadata generation:</p>
-<pre><code class="language-sh">crystal run examples/service_extensions_codegen.cr</code></pre>
-<p>This example constructs descriptors inline and shows that the generated code includes output like the following.</p>
-<pre><code class="language-crystal"><span class="k">module</span> <span class="t">DemoService</span>
-  <span class="t">METHODS</span> <span class="o">=</span> [
-    {
-      name: <span class="s">&quot;Ping&quot;</span>,
-      request_type: <span class="s">&quot;.demo.PingRequest&quot;</span>,
-      response_type: <span class="s">&quot;.demo.PingReply&quot;</span>,
-      client_streaming: <span class="n">false</span>,
-      server_streaming: <span class="n">false</span>,
-      path: <span class="s">&quot;/demo.DemoService/Ping&quot;</span>,
-    },
-  ] <span class="k">of</span> <span class="t">NamedTuple</span>(name: <span class="t">String</span>, request_type: <span class="t">String</span>, response_type: <span class="t">String</span>, client_streaming: <span class="t">Bool</span>, server_streaming: <span class="t">Bool</span>, path: <span class="t">String</span>)
-<span class="k">end</span>
-
-<span class="k">module</span> <span class="t">Extensions</span>
-  <span class="t">RPC_REQUIRED</span> <span class="o">=</span> <span class="t">ExtensionDescriptor</span>.new(
-    name: <span class="s">&quot;rpc_required&quot;</span>,
-    extendee: <span class="s">&quot;.google.protobuf.MethodOptions&quot;</span>,
-    number: <span class="n">50001</span>,
-    label: <span class="t">Proto</span><span class="t">::</span><span class="t">Bootstrap</span><span class="t">::</span><span class="t">FieldLabel</span><span class="t">::</span><span class="t">LABEL_OPTIONAL</span>,
-    <span class="k">type</span>: <span class="t">Proto</span><span class="t">::</span><span class="t">Bootstrap</span><span class="t">::</span><span class="t">FieldType</span><span class="t">::</span><span class="t">TYPE_BOOL</span>,
-    type_name: <span class="s">&quot;&quot;</span>,
-  )
-<span class="k">end</span></code></pre>
-<h2><a id="testing" class="anchor" href="#testing">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>Testing</h2>
-<pre><code class="language-sh">crystal spec</code></pre>
-<p>The suite compiles and runs freshly generated programs against this checkout,
-including imported required messages, all four RPC metadata shapes and extension
-descriptors. Wire readers check unsigned lengths and field numbers before
-conversion; length-delimited payloads are rejected before allocation when they
-exceed the configured field or remaining message budget.</p>
-<p>See <a href="spec/README.md">the test layout</a> for focused commands and conventions for
-file boundaries, example granularity and ordering.</p>
+</a>Development</h2>
+<p>From this checkout:</p>
+<pre><code class="language-sh">shards install
+shards build
+crystal spec
+crystal run examples/basic_roundtrip.cr</code></pre>
+<p>Tests include compiling and executing freshly generated code. See
+<a href="spec/README.md">test layout</a> and <a href="examples/">examples</a> for details.</p>
+<p>License: MIT, as declared in <a href="shard.yml">shard.yml</a>.</p>
 </div>
 </body>
 </html>
