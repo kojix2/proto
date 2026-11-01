@@ -1,6 +1,7 @@
 # proto.cr
 
 [![Test](https://github.com/kojix2/proto/actions/workflows/test.yml/badge.svg)](https://github.com/kojix2/proto/actions/workflows/test.yml)
+[![Lines of Code](https://img.shields.io/endpoint?url=https%3A%2F%2Ftokei.kojix2.net%2Fbadge%2Fgithub%2Fkojix2%2Fproto%2Flines)](https://tokei.kojix2.net/github/kojix2/proto)
 
 Protocol Buffers runtime and message-code generator for Crystal >= 1.9.
 Supports unknown fields, enums, oneof, maps, field presence and extensions.
