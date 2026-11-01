@@ -147,3 +147,6 @@ end
 ```sh
 crystal spec
 ```
+
+See [the test layout](spec/README.md) for focused commands and conventions for
+file boundaries, example granularity and ordering.
