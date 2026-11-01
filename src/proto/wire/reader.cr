@@ -47,13 +47,14 @@ module Proto
       def read_tag : {Int32, Int32}?
         v = read_varint? { return }
         wire_type = (v & 0x7_u64).to_i32
-        field_number = (v >> 3).to_i32!
-        if field_number <= 0
-          raise DecodeError.new("invalid field number: #{field_number}")
+        raw_field_number = v >> 3
+        if raw_field_number == 0
+          raise DecodeError.new("invalid field number: 0")
         end
-        if field_number > MAX_FIELD_NUMBER
-          raise DecodeError.new("field number out of range: #{field_number}")
+        if raw_field_number > MAX_FIELD_NUMBER.to_u64
+          raise DecodeError.new("field number out of range: #{raw_field_number}")
         end
+        field_number = raw_field_number.to_i32
         unless WireType.valid?(wire_type)
           raise DecodeError.new("invalid wire type: #{wire_type}")
         end
@@ -334,13 +335,19 @@ module Proto
 
       private def read_length : Int32
         len_u64 = read_varint
-        len = len_u64.to_i32!
+        if len_u64 > Int32::MAX.to_u64
+          raise DecodeError.new("length out of range: #{len_u64}")
+        end
+        len = len_u64.to_i32
         if len > @max_field_length
           raise DecodeError.new("field length exceeds limit: #{len} > #{@max_field_length}")
         end
+        # Reject before allocating, reading or skipping the payload. The length
+        # varint has already been charged to this reader's message budget.
+        if @bytes_read + len > @max_message_size
+          raise DecodeError.new("message exceeds max size: #{@bytes_read + len} > #{@max_message_size}")
+        end
         len
-      rescue OverflowError
-        raise DecodeError.new("length out of range: #{len_u64}")
       end
 
       private def consume_bytes!(count : Int64) : Nil

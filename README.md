@@ -148,5 +148,11 @@ end
 crystal spec
 ```
 
+The suite compiles and runs freshly generated programs against this checkout,
+including imported required messages, all four RPC metadata shapes and extension
+descriptors. Wire readers check unsigned lengths and field numbers before
+conversion; length-delimited payloads are rejected before allocation when they
+exceed the configured field or remaining message budget.
+
 See [the test layout](spec/README.md) for focused commands and conventions for
 file boundaries, example granularity and ordering.

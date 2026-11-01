@@ -9,7 +9,7 @@ Read the runtime from wire primitives to message behavior, then code generation:
 | `open_enum_spec.cr` | Open-enum construction, known/unknown values, hashing and display |
 | `bootstrap/` | Descriptor types and protoc request/response serialization |
 | `generator/` | Naming, type resolution and FileGenerator features in separate files |
-| `integration/` | Building and invoking the protoc plugin |
+| `integration/` | Building/invoking the protoc plugin and compiling/executing freshly generated programs |
 | `support/` | Explicitly required message fixtures and wire helpers; no examples |
 | `fixtures/` | Proto schemas, generated messages and golden output |
 
@@ -34,7 +34,9 @@ require another spec file for its fixtures. Hand-written messages live in the
 - Keep helpers free of examples, import only the fixtures a file uses, and use
   unique temporary paths with cleanup. No example may depend on another's state.
 - Name source-generation assertions as source checks. String matching does not
-  establish that generated code compiles; plugin execution belongs in integration.
+  establish that generated code compiles. In `integration/generated_code_spec.cr`,
+  generate temporary source, compile it against this checkout, then run it to
+  exercise message APIs, imports, all RPC metadata shapes and extensions.
 
 The order above is for reading. File names do not encode execution order, and
 the suite must also pass with shuffled examples.

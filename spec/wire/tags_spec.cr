@@ -3,6 +3,17 @@ require "../support/wire_helpers"
 
 describe "Proto wire format" do
   describe "read_tag" do
+    [0x100000001_u64, UInt64::MAX >> 3].each do |field_number|
+      it "rejects field number #{field_number} before narrowing its representation" do
+        io = IO::Memory.new
+        Proto::Wire::Writer.new(io).write_varint(field_number << 3)
+        io.rewind
+        expect_raises(Proto::DecodeError, /field number out of range/) do
+          Proto::Wire::Reader.new(io).read_tag
+        end
+      end
+    end
+
     it "returns nil on clean EOF" do
       reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes.empty))
       reader.read_tag.should be_nil
