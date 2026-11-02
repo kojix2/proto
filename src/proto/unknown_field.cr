@@ -138,7 +138,7 @@ module Proto
 
     def write_unknown_fields(writer : Wire::Writer) : Nil
       @unknown_fields.each do |unknown_field|
-        writer.write_tag(unknown_field.field_number, unknown_field.wire_type)
+        writer.write_unknown_tag(unknown_field.field_number, unknown_field.wire_type)
         case d = unknown_field.data
         when UInt64
           if unknown_field.wire_type == WireType::FIXED64
@@ -152,14 +152,14 @@ module Proto
           writer.write_bytes(d)
         when Array(UnknownField)
           write_unknown_group_fields(writer, d)
-          writer.write_tag(unknown_field.field_number, WireType::END_GROUP)
+          writer.write_unknown_tag(unknown_field.field_number, WireType::END_GROUP)
         end
       end
     end
 
     private def write_unknown_group_fields(writer : Wire::Writer, fields : Array(UnknownField)) : Nil
       fields.each do |field|
-        writer.write_tag(field.field_number, field.wire_type)
+        writer.write_unknown_tag(field.field_number, field.wire_type)
         case d = field.data
         when UInt64
           if field.wire_type == WireType::FIXED64
@@ -173,7 +173,7 @@ module Proto
           writer.write_bytes(d)
         when Array(UnknownField)
           write_unknown_group_fields(writer, d)
-          writer.write_tag(field.field_number, WireType::END_GROUP)
+          writer.write_unknown_tag(field.field_number, WireType::END_GROUP)
         end
       end
     end
@@ -221,7 +221,7 @@ module Proto
       when Bootstrap::FieldType::TYPE_BOOL
         decode_varint(field) { |value| value != 0_u64 }
       when Bootstrap::FieldType::TYPE_INT32
-        decode_varint(field, &.to_i32!)
+        decode_varint(field) { |value| Wire::Reader.int32_from_varint(value) }
       when Bootstrap::FieldType::TYPE_INT64
         decode_varint(field, &.to_i64!)
       when Bootstrap::FieldType::TYPE_UINT32
@@ -236,7 +236,7 @@ module Proto
       when Bootstrap::FieldType::TYPE_SINT64
         decode_varint(field) { |value| ((value >> 1).to_i64 ^ -(value & 1_u64).to_i64) }
       when Bootstrap::FieldType::TYPE_ENUM
-        decode_varint(field, &.to_i32!)
+        decode_varint(field) { |value| Wire::Reader.int32_from_varint(value) }
       end
     end
 

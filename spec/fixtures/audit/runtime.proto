@@ -1,0 +1,22 @@
+syntax = "proto3";
+package audit_runtime;
+message Item {
+  int32 encode = 1;
+  int32 encode_partial = 2;
+  int32 validate_required = 3;
+  int32 validate_required_deep = 4;
+  int32 unknown_fields = 5;
+  int32 capture_unknown_field = 6;
+  int32 extension_values = 7;
+  oneof choice { int32 none = 8; string text = 9; int32 none_8 = 10; }
+}
+message Numbers {
+  int32 value = 1;
+  repeated int32 values = 2;
+  enum State { ZERO = 0; ONE = 1; }
+  State state = 3;
+  repeated State states = 4;
+  string text = 5;
+  bytes data = 6;
+}
+message Node { Node child = 1; repeated Node children = 2; }

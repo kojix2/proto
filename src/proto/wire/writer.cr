@@ -20,6 +20,12 @@ module Proto
 
       def write_tag(field_number : Int32, wire_type : Int32) : Nil
         validate_field_number!(field_number)
+        write_unknown_tag(field_number, wire_type)
+      end
+
+      # Captured unknown fields may use implementation-reserved schema numbers.
+      def write_unknown_tag(field_number : Int32, wire_type : Int32) : Nil
+        validate_field_number!(field_number, allow_reserved: true)
         validate_wire_type!(wire_type)
         write_varint(((field_number.to_u64 << 3) | wire_type.to_u64))
       end
@@ -101,6 +107,11 @@ module Proto
       end
 
       def write_string(value : String) : Nil
+        raise EncodeError.new("invalid UTF-8 string") unless value.valid_encoding?
+        write_string_unchecked(value)
+      end
+
+      def write_string_unchecked(value : String) : Nil
         write_bytes(value.to_slice)
       end
 
@@ -139,6 +150,10 @@ module Proto
         return if value.empty?
         write_tag(field_number, WireType::LENGTH_DELIMITED)
         write_string(value)
+      end
+
+      def write_string_field_unchecked(field_number : Int32, value : String) : Nil
+        write_bytes_field(field_number, value.to_slice)
       end
 
       # Write a bytes field only if value is not empty.
@@ -184,14 +199,14 @@ module Proto
         end
       end
 
-      private def validate_field_number!(field_number : Int32) : Nil
+      private def validate_field_number!(field_number : Int32, allow_reserved : Bool = false) : Nil
         if field_number <= 0
           raise EncodeError.new("invalid field number: #{field_number}")
         end
         if field_number > 536_870_911
           raise EncodeError.new("field number out of range: #{field_number}")
         end
-        if (19_000..19_999).includes?(field_number)
+        if !allow_reserved && (19_000..19_999).includes?(field_number)
           raise EncodeError.new("reserved field number range: #{field_number}")
         end
       end

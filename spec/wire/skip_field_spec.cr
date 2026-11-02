@@ -144,3 +144,13 @@ describe "Proto wire format" do
     end
   end
 end
+
+describe "truncated skips" do
+  {Proto::WireType::FIXED32 => Bytes[1], Proto::WireType::FIXED64 => Bytes[1],
+   Proto::WireType::LENGTH_DELIMITED => Bytes[3, 1]}.each do |type, wire|
+    it "raises DecodeError when skipping a truncated #{type} field" do
+      reader = Proto::Wire::Reader.new(IO::Memory.new(wire))
+      expect_raises(Proto::DecodeError, /unexpected EOF/) { reader.skip_field(type) }
+    end
+  end
+end

@@ -161,3 +161,15 @@ describe "Proto wire format" do
     end
   end
 end
+
+describe Proto::Wire::Reader do
+  {0x1_0000_0000_u64 => 0, 0x1_ffff_ffff_u64 => -1,
+   0x1234_5678_8000_0000_u64 => Int32::MIN, UInt64::MAX => -1}.each do |raw, expected|
+    it "truncates int32 varint #{raw} to its signed low 32 bits" do
+      io = IO::Memory.new
+      Proto::Wire::Writer.new(io).write_varint(raw)
+      io.rewind
+      Proto::Wire::Reader.new(io).read_int32.should eq(expected)
+    end
+  end
+end

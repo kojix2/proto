@@ -159,3 +159,23 @@ describe Proto::Generator::FileGenerator do
     end
   end
 end
+
+describe "bytes default escapes" do
+  {"\\x00\\xAf\\7\\077\\n\\r\\t\\b\\f\\v\\a\\\\\\\"\\'\\?" => "Bytes[0_u8, 175_u8, 7_u8, 63_u8, 10_u8, 13_u8, 9_u8, 8_u8, 12_u8, 11_u8, 7_u8, 92_u8, 34_u8, 39_u8, 63_u8]"}.each do |text, literal|
+    it "decodes C escapes in descriptor bytes defaults" do
+      file = Proto::Bootstrap::FileDescriptorProto.new
+      file.name = "bytes.proto"
+      field = Proto::Bootstrap::FieldDescriptorProto.new
+      field.name = "payload"
+      field.number = 1
+      field.type = Proto::Bootstrap::FieldType::TYPE_BYTES
+      field.default_value = text
+      message = Proto::Bootstrap::DescriptorProto.new
+      message.name = "Config"
+      message.field << field
+      file.message_type << message
+      generated = Proto::Generator::FileGenerator.new(file, Proto::Generator::TypeIndex.new([file])).generate
+      generated.should contain("getter payload : Bytes = #{literal}")
+    end
+  end
+end

@@ -18,11 +18,11 @@ module Regressions
         reader = Proto::Wire::Reader.new(io)
         while tag = reader.read_tag
           fn, wt = tag
-          case fn
-          when 1
+          case {fn, wt}
+          when {1, Proto::WireType::LENGTH_DELIMITED}
             reader.expect_wire_type!(1, wt, Proto::WireType::LENGTH_DELIMITED)
             msg.left = reader.read_string
-          when 2
+          when {2, Proto::WireType::LENGTH_DELIMITED}
             reader.expect_wire_type!(2, wt, Proto::WireType::LENGTH_DELIMITED)
             msg.right = reader.read_string
           else
@@ -88,27 +88,27 @@ module Regressions
       reader = Proto::Wire::Reader.new(io)
       while tag = reader.read_tag
         fn, wt = tag
-        case fn
-        when 1
+        case {fn, wt}
+        when {1, Proto::WireType::VARINT}
           reader.expect_wire_type!(1, wt, Proto::WireType::VARINT)
           msg.first = reader.read_int32
-        when 2
+        when {2, Proto::WireType::LENGTH_DELIMITED}
           reader.expect_wire_type!(2, wt, Proto::WireType::LENGTH_DELIMITED)
           msg.second = reader.read_string
-        when 3
+        when {3, Proto::WireType::VARINT}, {3, Proto::WireType::LENGTH_DELIMITED}
           if reader.packed_wire_type?(3, wt, Proto::WireType::VARINT)
-            reader.read_packed_varint { |v| msg.values << v.to_i32! }
+            reader.read_packed_varint { |v| msg.values << Proto::Wire::Reader.int32_from_varint(v) }
           else
             msg.values << reader.read_int32
           end
-        when 4
+        when {4, Proto::WireType::LENGTH_DELIMITED}
           msg.child = reader.read_embedded(4, wt) do |sub|
             if current = msg.child
               merged = IO::Memory.new
               current.encode_partial(merged)
               IO.copy(sub, merged)
               merged.rewind
-              Nested::Child.decode_partial(merged)
+              Nested::Child.decode_partial(sub.rewrap(merged.to_slice))
             else
               Nested::Child.decode_partial(sub)
             end
@@ -191,18 +191,18 @@ module Regressions
         reader = Proto::Wire::Reader.new(io)
         while tag = reader.read_tag
           fn, wt = tag
-          case fn
-          when 1
+          case {fn, wt}
+          when {1, Proto::WireType::LENGTH_DELIMITED}
             reader.expect_wire_type!(1, wt, Proto::WireType::LENGTH_DELIMITED)
             msg.key = reader.read_string
-          when 2
+          when {2, Proto::WireType::LENGTH_DELIMITED}
             msg.value = reader.read_embedded(2, wt) do |sub|
               if current = msg.value
                 merged = IO::Memory.new
                 current.encode_partial(merged)
                 IO.copy(sub, merged)
                 merged.rewind
-                Nested.decode_partial(merged)
+                Nested.decode_partial(sub.rewrap(merged.to_slice))
               else
                 Nested.decode_partial(sub)
               end
@@ -284,38 +284,38 @@ module Regressions
       reader = Proto::Wire::Reader.new(io)
       while tag = reader.read_tag
         fn, wt = tag
-        case fn
-        when 1
+        case {fn, wt}
+        when {1, Proto::WireType::VARINT}
           reader.expect_wire_type!(1, wt, Proto::WireType::VARINT)
           msg.flag = reader.read_bool
-        when 2
+        when {2, Proto::WireType::LENGTH_DELIMITED}
           msg.nested = reader.read_embedded(2, wt) do |sub|
             if current = msg.nested
               merged = IO::Memory.new
               current.encode_partial(merged)
               IO.copy(sub, merged)
               merged.rewind
-              Nested.decode_partial(merged)
+              Nested.decode_partial(sub.rewrap(merged.to_slice))
             else
               Nested.decode_partial(sub)
             end
           end
-        when 3
+        when {3, Proto::WireType::LENGTH_DELIMITED}
           entry = reader.read_embedded(3, wt) { |sub| Wrapper::EntriesEntry.decode_partial(sub) }
           msg.entries[entry.key] = entry.value || Nested.new
-        when 4
+        when {4, Proto::WireType::VARINT}, {4, Proto::WireType::LENGTH_DELIMITED}
           if reader.packed_wire_type?(4, wt, Proto::WireType::VARINT)
-            reader.read_packed_varint { |v| msg.unpacked << v.to_i32! }
+            reader.read_packed_varint { |v| msg.unpacked << Proto::Wire::Reader.int32_from_varint(v) }
           else
             msg.unpacked << reader.read_int32
           end
-        when 5
+        when {5, Proto::WireType::VARINT}, {5, Proto::WireType::LENGTH_DELIMITED}
           if reader.packed_wire_type?(5, wt, Proto::WireType::VARINT)
-            reader.read_packed_varint { |v| msg.packed << v.to_i32! }
+            reader.read_packed_varint { |v| msg.packed << Proto::Wire::Reader.int32_from_varint(v) }
           else
             msg.packed << reader.read_int32
           end
-        when 6
+        when {6, Proto::WireType::LENGTH_DELIMITED}
           reader.expect_wire_type!(6, wt, Proto::WireType::LENGTH_DELIMITED)
           msg.unknown_fields_ = reader.read_string
         else

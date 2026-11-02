@@ -1,13 +1,23 @@
 module Proto
   module Generator
     module FieldNaming
+      RUNTIME_FIELD_NAMES = Set{
+        "unknown_fields", "encode", "encode_partial", "validate_required", "validate_required_deep",
+        "capture_unknown_field", "write_unknown_fields", "add_unknown_varint", "decode_known_enum",
+        "has_extension", "extension_value", "extension_values", "initialize", "class",
+        "object_id", "hash", "to_s", "inspect", "dup", "clone", "same", "tap", "try",
+        "itself", "is_a", "nil", "responds_to", "packable_extension_type",
+        "decode_packed_extension_values", "write_unknown_group_fields", "extension_wire_type_for",
+        "decode_extension_value", "decode_varint_extension", "decode_fixed64_extension",
+        "decode_fixed32_extension", "decode_length_delimited_extension", "decode_varint",
+        "decode_fixed64", "decode_fixed32", "decode_bytes", "unpack_float64", "unpack_float32",
+      }
+
       private def field_identifier(field : Bootstrap::FieldDescriptorProto) : String
         identifier = crystal_identifier(field.name)
-        # Proto::Message exposes this runtime API. Escaping the schema field
-        # keeps valid protobuf names from producing conflicting Crystal methods.
-        return identifier unless identifier == "unknown_fields"
-        return "unknown_fields_" if field.name == "unknown_fields"
-        "unknown_fields__#{field.number}"
+        return identifier unless RUNTIME_FIELD_NAMES.includes?(identifier)
+        return "#{identifier}_" if field.name == identifier
+        "#{identifier}__#{field.number}"
       end
 
       private def field_presence_identifier(field : Bootstrap::FieldDescriptorProto) : String

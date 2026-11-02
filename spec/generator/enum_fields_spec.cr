@@ -144,3 +144,22 @@ describe Proto::Generator::FileGenerator do
     end
   end
 end
+
+describe "top-level enum identifiers" do
+  it "diagnoses collisions after enum member normalization" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "collision.proto"
+    enum_desc = Proto::Bootstrap::EnumDescriptorProto.new
+    enum_desc.name = "State"
+    {"ready", "READY"}.each_with_index do |name, number|
+      value = Proto::Bootstrap::EnumValueDescriptorProto.new
+      value.name = name
+      value.number = number
+      enum_desc.value << value
+    end
+    file.enum_type << enum_desc
+    expect_raises(Exception, /enum member collision/) do
+      Proto::Generator::FileGenerator.new(file, Proto::Generator::TypeIndex.new([file])).generate
+    end
+  end
+end

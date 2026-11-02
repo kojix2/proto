@@ -152,3 +152,15 @@ describe "Proto wire format" do
     end
   end
 end
+
+describe "UTF-8 string validation" do
+  it "rejects invalid UTF-8 on decode and encode without restricting bytes" do
+    reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[1, 255]))
+    expect_raises(Proto::DecodeError, /UTF-8/) { reader.read_string }
+    invalid = String.new(Bytes[255])
+    writer = Proto::Wire::Writer.new(IO::Memory.new)
+    expect_raises(Proto::EncodeError, /UTF-8/) { writer.write_string(invalid) }
+    reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[1, 255]))
+    reader.read_bytes.should eq(Bytes[255])
+  end
+end

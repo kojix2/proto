@@ -216,12 +216,18 @@ module Proto
         io << "#{indent}    end\n"
         io << "#{indent}  end\n\n"
 
-        constant_counts = Hash(String, Int32).new(0)
+        used_constants = Set{"ALL"}
+        constant_names = [] of String
         extension_fields.each do |field|
           base_name = extension_constant_name(field.name)
-          constant_counts[base_name] += 1
-          suffix = constant_counts[base_name]
-          const_name = suffix == 1 ? base_name : "#{base_name}_#{suffix}"
+          const_name = base_name
+          suffix = 2
+          while used_constants.includes?(const_name)
+            const_name = "#{base_name}_#{suffix}"
+            suffix += 1
+          end
+          used_constants.add(const_name)
+          constant_names << const_name
           io << "#{indent}  #{const_name} = ExtensionDescriptor.new(\n"
           io << "#{indent}    name: #{field.name.inspect},\n"
           io << "#{indent}    extendee: #{field.extendee.inspect},\n"
@@ -233,15 +239,7 @@ module Proto
         end
 
         io << "#{indent}  ALL = [\n"
-        constant_counts.each do |base_name, count|
-          if count == 1
-            io << "#{indent}    #{base_name},\n"
-          else
-            (1..count).each do |idx|
-              io << "#{indent}    #{base_name}_#{idx},\n"
-            end
-          end
-        end
+        constant_names.each { |name| io << "#{indent}    #{name},\n" }
         io << "#{indent}  ] of ExtensionDescriptor\n"
         io << "#{indent}end\n\n"
       end
@@ -267,6 +265,11 @@ module Proto
       end
 
       private def emit_enum(io : IO, en : Bootstrap::EnumDescriptorProto, indent : String) : Nil
+        names = Set(String).new
+        en.value.each do |member|
+          name = enum_member_name(member.name)
+          raise "enum member collision in #{en.name}: '#{name}'" unless names.add?(name)
+        end
         io << "#{indent}enum #{en.name} : Int32\n"
         en.value.each do |v|
           io << "#{indent}  #{enum_member_name(v.name)} = #{v.number}\n"
@@ -425,10 +428,16 @@ module Proto
         io << "#{indent}  reader = Proto::Wire::Reader.new(io)\n"
         io << "#{indent}  while tag = reader.read_tag\n"
         io << "#{indent}    fn, wt = tag\n"
-        io << "#{indent}    case fn\n"
+        io << "#{indent}    case {fn, wt}\n"
 
         msg.field.each do |field_desc|
-          io << "#{indent}    when #{field_desc.number}\n"
+          expected = SCALAR_WIRE_TYPE_MAP[field_desc.type]? ||
+                     (field_desc.type == Bootstrap::FieldType::TYPE_MESSAGE ? "Proto::WireType::LENGTH_DELIMITED" : "Proto::WireType::VARINT")
+          patterns = "{#{field_desc.number}, #{expected}}"
+          if field_desc.label == Bootstrap::FieldLabel::LABEL_REPEATED && PACKABLE_TYPES.includes?(field_desc.type)
+            patterns += ", {#{field_desc.number}, Proto::WireType::LENGTH_DELIMITED}"
+          end
+          io << "#{indent}    when #{patterns}\n"
           emit_field_decode(io, field_desc, msg, indent + "      ")
         end
 
@@ -458,7 +467,7 @@ module Proto
         else
           expected_wire_type = SCALAR_WIRE_TYPE_MAP[type]? || "Proto::WireType::VARINT"
           emit_expected_wire_type_check(io, field.number, expected_wire_type, indent)
-          reader_method = SCALAR_READER_MAP[type]? || "read_uint64"
+          reader_method = type == Bootstrap::FieldType::TYPE_STRING && @file.effective_syntax == "proto2" ? "read_string_unchecked" : (SCALAR_READER_MAP[type]? || "read_uint64")
           reader_call = "reader.#{reader_method}"
           if repeated
             io << "#{indent}msg.#{fname} << #{reader_call}\n"
@@ -481,7 +490,7 @@ module Proto
       end
 
       private def emit_packed_repeated_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, fname : String, type : Bootstrap::FieldType, indent : String) : Nil
-        reader_method = SCALAR_READER_MAP[type]? || "read_uint64"
+        reader_method = type == Bootstrap::FieldType::TYPE_STRING && @file.effective_syntax == "proto2" ? "read_string_unchecked" : (SCALAR_READER_MAP[type]? || "read_uint64")
         packed_reader = packed_reader_for(type)
         unpacked_wire_type = SCALAR_WIRE_TYPE_MAP[type]? || "Proto::WireType::VARINT"
         io << "#{indent}if reader.packed_wire_type?(#{field.number}, wt, #{unpacked_wire_type})\n"
@@ -503,7 +512,7 @@ module Proto
           io << "#{indent}    current.encode_partial(merged)\n"
           io << "#{indent}    IO.copy(sub, merged)\n"
           io << "#{indent}    merged.rewind\n"
-          io << "#{indent}    #{crystal_type}.decode_partial(merged)\n"
+          io << "#{indent}    #{crystal_type}.decode_partial(sub.rewrap(merged.to_slice))\n"
           io << "#{indent}  else\n"
           io << "#{indent}    #{crystal_type}.decode_partial(sub)\n"
           io << "#{indent}  end\n"
@@ -566,7 +575,7 @@ module Proto
       # For typed packed readers (float, double, sfixed*) no conversion is needed.
       private def packed_convert(type : Bootstrap::FieldType, var : String) : String
         case type
-        when Bootstrap::FieldType::TYPE_INT32  then "#{var}.to_i32!"
+        when Bootstrap::FieldType::TYPE_INT32  then "Proto::Wire::Reader.int32_from_varint(#{var})"
         when Bootstrap::FieldType::TYPE_INT64  then "#{var}.to_i64!"
         when Bootstrap::FieldType::TYPE_UINT32 then "#{var}.to_u32!"
         when Bootstrap::FieldType::TYPE_UINT64 then var
@@ -611,7 +620,7 @@ module Proto
             if oneof = msg.oneof_decl[oneof_index]?
               case_enum = oneof_case_enum_name(oneof.name)
               case_prop = oneof_case_prop_name(oneof.name)
-              case_value = oneof_case_value_name(field.name)
+              case_value = oneof_field_case_name(msg, field)
               io << "#{indent}if #{case_prop} == #{case_enum}::#{case_value}\n"
               emit_field_encode_body(io, field, indent + "  ")
               io << "#{indent}end\n"
@@ -661,7 +670,7 @@ module Proto
         elsif type == Bootstrap::FieldType::TYPE_ENUM
           emit_enum_field_encode(io, field, repeated, num, indent)
         elsif repeated && PACKABLE_TYPES.includes?(type) && packed_field?(field)
-          writer_method = SCALAR_WRITER_MAP[type]? || "write_uint64"
+          writer_method = type == Bootstrap::FieldType::TYPE_STRING && @file.effective_syntax == "proto2" ? "write_string_unchecked" : (SCALAR_WRITER_MAP[type]? || "write_uint64")
           io << "#{indent}w.write_packed(#{num}) do |buf|\n"
           io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
           io << "#{indent}  #{fname}.each { |item| sub.#{writer_method}(item) }\n"
@@ -780,7 +789,9 @@ module Proto
             "#{open_enum_type_for(field)}.new(0)"
           else
             crystal = resolve_type(field.type_name)
-            "#{crystal}.new(0)"
+            descriptor = enum_descriptor_for(field.type_name)
+            first = descriptor.try(&.value.first?)
+            first ? "#{crystal}::#{enum_member_name(first.name)}" : "#{crystal}.new(0)"
           end
         else
           "0"
@@ -798,11 +809,13 @@ module Proto
           default_text == "true" ? "true" : "false"
         when Bootstrap::FieldType::TYPE_STRING
           default_text.inspect
+        when Bootstrap::FieldType::TYPE_BYTES
+          bytes_default_literal(default_text)
         when Bootstrap::FieldType::TYPE_ENUM
           if open_enum_field?(field)
-            "#{open_enum_type_for(field)}.new(#{resolve_type(field.type_name)}::#{default_text})"
+            "#{open_enum_type_for(field)}.new(#{resolve_type(field.type_name)}::#{enum_member_name(default_text)})"
           else
-            "#{resolve_type(field.type_name)}::#{default_text}"
+            "#{resolve_type(field.type_name)}::#{enum_member_name(default_text)}"
           end
         when Bootstrap::FieldType::TYPE_FLOAT
           float_default_literal(default_text, "f32")
@@ -830,6 +843,66 @@ module Proto
              Bootstrap::FieldType::TYPE_FIXED64
           integer_default_literal(value, "UInt64")
         end
+      end
+
+      private def enum_descriptor_for(type_name : String) : Bootstrap::EnumDescriptorProto?
+        entry = @index.resolve(type_name)
+        return unless entry && entry.kind.enum?
+        parts = type_name.lstrip('.').split('.')
+        package_size = entry.file.package.empty? ? 0 : entry.file.package.split('.').size
+        names = parts[package_size..]
+        messages = entry.file.message_type
+        enums = entry.file.enum_type
+        names[0...-1].each do |name|
+          message = messages.find { |candidate| candidate.name == name }
+          return unless message
+          messages = message.nested_type
+          enums = message.enum_type
+        end
+        enums.find { |candidate| candidate.name == names.last }
+      end
+
+      private def bytes_default_literal(value : String) : String
+        bytes = IO::Memory.new
+        input = value.to_slice
+        i = 0
+        escapes = {'a' => 7_u8, 'b' => 8_u8, 'f' => 12_u8, 'n' => 10_u8,
+                   'r' => 13_u8, 't' => 9_u8, 'v' => 11_u8, '\\' => 92_u8,
+                   '\'' => 39_u8, '"' => 34_u8, '?' => 63_u8}
+        while i < input.size
+          byte = input[i]
+          i += 1
+          unless byte == 92
+            bytes.write_byte(byte)
+            next
+          end
+          raise "incomplete bytes default escape" if i == input.size
+          char = input[i].chr
+          i += 1
+          if escaped = escapes[char]?
+            bytes.write_byte(escaped)
+          else
+            number, i = parse_numeric_byte_escape(value, i - 1)
+            bytes.write_byte(number)
+          end
+        end
+        return "Bytes.empty" if bytes.size == 0
+        "Bytes[#{bytes.to_slice.map { |octet| "#{octet}_u8" }.join(", ")}]"
+      end
+
+      private def parse_numeric_byte_escape(value : String, start : Int32) : {UInt8, Int32}
+        hex = value.byte_at(start) == 'x'.ord
+        radix = hex ? 16 : 8
+        limit = hex ? 2 : 3
+        start += 1 if hex
+        offset = start
+        while offset < value.bytesize && offset - start < limit && value.byte_at(offset).chr.to_i?(radix)
+          offset += 1
+        end
+        raise "invalid bytes default escape" if offset == start
+        number = value.byte_slice(start, offset - start).to_u8?(radix)
+        raise "bytes default escape out of range" unless number
+        {number, offset}
       end
 
       private def float_default_literal(value : String, suffix : String) : String
@@ -994,7 +1067,7 @@ module Proto
           io << "#{indent}  w.write_tag(#{num}, Proto::WireType::VARINT)\n"
           io << "#{indent}  w.write_int32(#{enum_encode_value_expr(field, "_v")})\n"
         else
-          writer_method = SCALAR_WRITER_MAP[type]? || "write_uint64"
+          writer_method = type == Bootstrap::FieldType::TYPE_STRING && @file.effective_syntax == "proto2" ? "write_string_unchecked" : (SCALAR_WRITER_MAP[type]? || "write_uint64")
           wire_const = SCALAR_WIRE_TYPE_MAP[type]? || "Proto::WireType::VARINT"
           io << "#{indent}  w.write_tag(#{num}, #{wire_const})\n"
           io << "#{indent}  w.#{writer_method}(_v)\n"
@@ -1005,13 +1078,13 @@ module Proto
       private def packed_field?(field : Bootstrap::FieldDescriptorProto) : Bool
         explicit = field.options.try(&.packed)
         return explicit unless explicit.nil?
-        @file.syntax == "proto3"
+        @file.effective_syntax == "proto3"
       end
 
       private def emit_scalar_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto,
                                            repeated : Bool, num : Int32, indent : String) : Nil
         fname = field_identifier(field)
-        writer_method = SCALAR_WRITER_MAP[field.type]? || "write_uint64"
+        writer_method = field.type == Bootstrap::FieldType::TYPE_STRING && @file.effective_syntax == "proto2" ? "write_string_unchecked" : (SCALAR_WRITER_MAP[field.type]? || "write_uint64")
         wire_const = SCALAR_WIRE_TYPE_MAP[field.type]? || "Proto::WireType::VARINT"
 
         if repeated
@@ -1040,7 +1113,7 @@ module Proto
       end
 
       private def open_enum_field?(field : Bootstrap::FieldDescriptorProto) : Bool
-        @file.syntax == "proto3" && field.type == Bootstrap::FieldType::TYPE_ENUM
+        @file.effective_syntax == "proto3" && field.type == Bootstrap::FieldType::TYPE_ENUM
       end
 
       private def open_enum_type_for(field : Bootstrap::FieldDescriptorProto) : String
@@ -1052,7 +1125,7 @@ module Proto
       end
 
       private def proto3_implicit_presence_field?(field : Bootstrap::FieldDescriptorProto) : Bool
-        return false unless @file.syntax == "proto3"
+        return false unless @file.effective_syntax == "proto3"
         return false if field.label == Bootstrap::FieldLabel::LABEL_REPEATED
         return false if field.proto3_optional?
         return false if field.oneof_index

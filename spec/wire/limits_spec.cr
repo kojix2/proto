@@ -86,3 +86,52 @@ describe "Proto wire format" do
     end
   end
 end
+
+describe "shared reader accounting" do
+  it "enforces the cumulative byte budget through the reader-taking unknown-field helper" do
+    message = Proto::Bootstrap::CodeGeneratorResponse.new
+    reader = Proto::Wire::Reader.new(IO::Memory.new(Bytes[122, 2, 97, 98, 122, 2, 99, 100]), max_message_size: 5)
+    fn, wt = reader.read_tag.as({Int32, Int32})
+    message.capture_unknown_field(reader, fn, wt)
+    fn, wt = reader.read_tag.as({Int32, Int32})
+    expect_raises(Proto::DecodeError, /max size/) { message.capture_unknown_field(reader, fn, wt) }
+  end
+end
+
+describe "recursion limits" do
+  {"capture", "skip"}.each do |operation|
+    it "bounds nested unknown groups while #{operation} uses the same reader" do
+      {5, 6}.each do |depth|
+        data = Bytes.new(depth, 0x0b_u8) + Bytes.new(depth, 0x0c_u8)
+        reader = Proto::Wire::Reader.new(IO::Memory.new(data), max_recursion_depth: 5)
+        tag = reader.read_tag.as({Int32, Int32})
+        if depth == 5
+          operation == "capture" ? reader.read_unknown_field(*tag) : reader.skip_tag(tag)
+          reader.read_tag.should be_nil
+        else
+          expect_raises(Proto::DecodeError, /recursion/) do
+            operation == "capture" ? reader.read_unknown_field(*tag) : reader.skip_tag(tag)
+          end
+        end
+      end
+    end
+  end
+
+  it "shares depth between nested-message IO and unknown groups" do
+    outer = Proto::Wire::Reader.new(IO::Memory.new(Bytes[2, 11, 12]), max_recursion_depth: 1)
+    inner = Proto::Wire::Reader.new(outer.read_embedded)
+    fn, wt = inner.read_tag.as({Int32, Int32})
+    expect_raises(Proto::DecodeError, /recursion/) { inner.read_unknown_field(fn, wt) }
+  end
+
+  it "permits packed values at the deepest allowed message level" do
+    outer = Proto::Wire::Reader.new(IO::Memory.new(Bytes[7, 1, 1, 4, 0, 0, 0, 0]), max_recursion_depth: 1)
+    inner = Proto::Wire::Reader.new(outer.read_embedded)
+    values = [] of UInt64
+    inner.read_packed_varint { |value| values << value }
+    fixed = [] of UInt32
+    inner.read_packed_fixed32 { |value| fixed << value }
+    values.should eq([1_u64])
+    fixed.should eq([0_u32])
+  end
+end

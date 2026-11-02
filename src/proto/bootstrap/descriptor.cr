@@ -24,7 +24,7 @@ module Proto
         case _field_number
         {{ yield }}
         else
-          capture_unknown_field(_reader, _field_number, _wire_type)
+          capture_unknown_field(_reader.read_unknown_field(_field_number, _wire_type))
         end
       end
     end
@@ -74,7 +74,7 @@ module Proto
           fn, wt = tag
           case fn
           when 2 then msg.packed = reader.read_bool
-          else        msg.capture_unknown_field(reader, fn, wt)
+          else        msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -113,18 +113,18 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when  1 then msg.name = reader.read_string
-          when  2 then msg.extendee = reader.read_string
+          when  1 then msg.name = reader.read_string_unchecked
+          when  2 then msg.extendee = reader.read_string_unchecked
           when  3 then msg.number = reader.read_int32
           when  4 then msg.label = FieldLabel.from_value(reader.read_int32)
           when  5 then msg.type = FieldType.from_value(reader.read_int32)
-          when  6 then msg.type_name = reader.read_string
-          when  7 then msg.default_value = reader.read_string
+          when  6 then msg.type_name = reader.read_string_unchecked
+          when  7 then msg.default_value = reader.read_string_unchecked
           when  8 then msg.options = FieldOptions.decode(reader.read_embedded)
           when  9 then msg.oneof_index = reader.read_int32
-          when 10 then msg.json_name = reader.read_string
+          when 10 then msg.json_name = reader.read_string_unchecked
           when 17 then msg.proto3_optional = reader.read_bool
-          else         msg.capture_unknown_field(reader, fn, wt)
+          else         msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -134,15 +134,15 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, name)
-        w.write_string_field(2, extendee)
+        w.write_string_field_unchecked(1, name)
+        w.write_string_field_unchecked(2, extendee)
         w.write_int32_field(3, number)
         w.write_tag(4, WireType::VARINT)
         w.write_int32(label.value)
         w.write_tag(5, WireType::VARINT)
         w.write_int32(type.value)
-        w.write_string_field(6, type_name)
-        w.write_string_field(7, default_value)
+        w.write_string_field_unchecked(6, type_name)
+        w.write_string_field_unchecked(7, default_value)
         if opts = options
           w.write_embedded(8) { |sub| opts.encode(sub) }
         end
@@ -150,7 +150,7 @@ module Proto
           w.write_tag(9, WireType::VARINT)
           w.write_int32(oi)
         end
-        w.write_string_field(10, json_name)
+        w.write_string_field_unchecked(10, json_name)
         w.write_bool_field(17, proto3_optional?)
         write_unknown_fields(w)
       end
@@ -171,8 +171,8 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when 1 then msg.name = reader.read_string
-          else        msg.capture_unknown_field(reader, fn, wt)
+          when 1 then msg.name = reader.read_string_unchecked
+          else        msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -180,7 +180,7 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, name)
+        w.write_string_field_unchecked(1, name)
         write_unknown_fields(w)
       end
     end
@@ -201,9 +201,9 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when 1 then msg.name = reader.read_string
+          when 1 then msg.name = reader.read_string_unchecked
           when 2 then msg.number = reader.read_int32
-          else        msg.capture_unknown_field(reader, fn, wt)
+          else        msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -211,7 +211,7 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, name)
+        w.write_string_field_unchecked(1, name)
         w.write_tag(2, WireType::VARINT)
         w.write_int32(number)
         write_unknown_fields(w)
@@ -234,9 +234,9 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when 1 then msg.name = reader.read_string
+          when 1 then msg.name = reader.read_string_unchecked
           when 2 then msg.value << EnumValueDescriptorProto.decode(reader.read_embedded)
-          else        msg.capture_unknown_field(reader, fn, wt)
+          else        msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -244,7 +244,7 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, name)
+        w.write_string_field_unchecked(1, name)
         value.each do |v|
           w.write_embedded(2) { |sub| v.encode(sub) }
         end
@@ -269,7 +269,7 @@ module Proto
           fn, wt = tag
           case fn
           when 7 then msg.map_entry = reader.read_bool
-          else        msg.capture_unknown_field(reader, fn, wt)
+          else        msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -299,14 +299,14 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when 1 then msg.name = reader.read_string
+          when 1 then msg.name = reader.read_string_unchecked
           when 2 then msg.field << FieldDescriptorProto.decode(reader.read_embedded)
           when 6 then msg.extension << FieldDescriptorProto.decode(reader.read_embedded)
           when 3 then msg.nested_type << DescriptorProto.decode(reader.read_embedded)
           when 4 then msg.enum_type << EnumDescriptorProto.decode(reader.read_embedded)
           when 7 then msg.options = MessageOptions.decode(reader.read_embedded)
           when 8 then msg.oneof_decl << OneofDescriptorProto.decode(reader.read_embedded)
-          else        msg.capture_unknown_field(reader, fn, wt)
+          else        msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -314,7 +314,7 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, name)
+        w.write_string_field_unchecked(1, name)
         field.each { |field_desc| w.write_embedded(2) { |sub| field_desc.encode(sub) } }
         extension.each { |extension_desc| w.write_embedded(6) { |sub| extension_desc.encode(sub) } }
         nested_type.each { |nested_msg| w.write_embedded(3) { |sub| nested_msg.encode(sub) } }
@@ -339,7 +339,7 @@ module Proto
         reader = Wire::Reader.new(io)
         while tag = reader.read_tag
           fn, wt = tag
-          msg.capture_unknown_field(reader, fn, wt)
+          msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
         end
         msg
       end
@@ -366,13 +366,13 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when 1 then msg.name = reader.read_string
-          when 2 then msg.input_type = reader.read_string
-          when 3 then msg.output_type = reader.read_string
+          when 1 then msg.name = reader.read_string_unchecked
+          when 2 then msg.input_type = reader.read_string_unchecked
+          when 3 then msg.output_type = reader.read_string_unchecked
           when 4 then msg.options = MethodOptions.decode(reader.read_embedded)
           when 5 then msg.client_streaming = reader.read_bool
           when 6 then msg.server_streaming = reader.read_bool
-          else        msg.capture_unknown_field(reader, fn, wt)
+          else        msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -380,9 +380,9 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, name)
-        w.write_string_field(2, input_type)
-        w.write_string_field(3, output_type)
+        w.write_string_field_unchecked(1, name)
+        w.write_string_field_unchecked(2, input_type)
+        w.write_string_field_unchecked(3, output_type)
         if opts = options
           w.write_embedded(4) { |sub| opts.encode(sub) }
         end
@@ -408,9 +408,9 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when 1 then msg.name = reader.read_string
+          when 1 then msg.name = reader.read_string_unchecked
           when 2 then msg.method << MethodDescriptorProto.decode(reader.read_embedded)
-          else        msg.capture_unknown_field(reader, fn, wt)
+          else        msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -418,7 +418,7 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, name)
+        w.write_string_field_unchecked(1, name)
         method.each { |method_desc| w.write_embedded(2) { |sub| method_desc.encode(sub) } }
         write_unknown_fields(w)
       end
@@ -440,21 +440,25 @@ module Proto
       property service : Array(ServiceDescriptorProto) = [] of ServiceDescriptorProto
       property syntax : String = ""
 
+      def effective_syntax : String
+        syntax.empty? ? "proto2" : syntax
+      end
+
       def self.decode(io : IO) : self
         msg = new
         reader = Wire::Reader.new(io)
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when  1 then msg.name = reader.read_string
-          when  2 then msg.package = reader.read_string
-          when  3 then msg.dependency << reader.read_string
+          when  1 then msg.name = reader.read_string_unchecked
+          when  2 then msg.package = reader.read_string_unchecked
+          when  3 then msg.dependency << reader.read_string_unchecked
           when  4 then msg.message_type << DescriptorProto.decode(reader.read_embedded)
           when  5 then msg.enum_type << EnumDescriptorProto.decode(reader.read_embedded)
           when  7 then msg.extension << FieldDescriptorProto.decode(reader.read_embedded)
           when  6 then msg.service << ServiceDescriptorProto.decode(reader.read_embedded)
-          when 12 then msg.syntax = reader.read_string
-          else         msg.capture_unknown_field(reader, fn, wt)
+          when 12 then msg.syntax = reader.read_string_unchecked
+          else         msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -462,14 +466,14 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, name)
-        w.write_string_field(2, package)
-        dependency.each { |dependency_name| w.write_string_field(3, dependency_name) }
+        w.write_string_field_unchecked(1, name)
+        w.write_string_field_unchecked(2, package)
+        dependency.each { |dependency_name| w.write_string_field_unchecked(3, dependency_name) }
         message_type.each { |message_desc| w.write_embedded(4) { |sub| message_desc.encode(sub) } }
         enum_type.each { |enum_desc| w.write_embedded(5) { |sub| enum_desc.encode(sub) } }
         extension.each { |extension_desc| w.write_embedded(7) { |sub| extension_desc.encode(sub) } }
         service.each { |svc| w.write_embedded(6) { |sub| svc.encode(sub) } }
-        w.write_string_field(12, syntax)
+        w.write_string_field_unchecked(12, syntax)
         write_unknown_fields(w)
       end
     end

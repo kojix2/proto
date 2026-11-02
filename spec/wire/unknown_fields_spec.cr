@@ -235,3 +235,16 @@ describe "Proto wire format" do
     end
   end
 end
+
+describe "reserved-number unknown fields" do
+  it "round-trips a captured field in the schema implementation-reserved range" do
+    wire = Bytes[0xc0, 0xa3, 0x09, 1]
+    message = Proto::Bootstrap::CodeGeneratorResponse.decode(IO::Memory.new(wire))
+    message.unknown_fields.size.should eq(1)
+    encoded = message.encode
+    # Bootstrap writes its known default fields as well.
+    copy = Proto::Bootstrap::CodeGeneratorResponse.decode(IO::Memory.new(encoded))
+    copy.unknown_fields.should eq(message.unknown_fields)
+    encoded[-4, 4].should eq(wire)
+  end
+end

@@ -10,7 +10,7 @@ module Proto
         io << "#{indent}enum #{case_enum} : Int32\n"
         io << "#{indent}  NONE = 0\n"
         fields.each do |field|
-          io << "#{indent}  #{oneof_case_value_name(field.name)} = #{field.number}\n"
+          io << "#{indent}  #{oneof_field_case_name(msg, field)} = #{field.number}\n"
         end
         io << "#{indent}end\n\n"
       end
@@ -25,6 +25,23 @@ module Proto
           .gsub(/[^A-Za-z\d]/, "_")
           .upcase
         normalized.empty? ? "FIELD" : normalized
+      end
+
+      private def oneof_field_case_name(msg : Bootstrap::DescriptorProto, field : Bootstrap::FieldDescriptorProto) : String
+        used = Set{"NONE"}
+        index = field.oneof_index || raise "missing oneof index for #{field.name}"
+        oneof_fields(msg, index).each do |member|
+          base = oneof_case_value_name(member.name)
+          name = base
+          suffix = member.number
+          while used.includes?(name)
+            name = "#{base}_#{suffix}"
+            suffix += 1
+          end
+          return name if member.same?(field)
+          used.add(name)
+        end
+        raise "missing oneof field #{field.name}"
       end
 
       private def oneof_fields(msg : Bootstrap::DescriptorProto, index : Int32) : Array(Bootstrap::FieldDescriptorProto)
@@ -49,7 +66,7 @@ module Proto
         fields.each do |field|
           fname = field_identifier(field)
           field_type = crystal_type_for(field)
-          case_value = oneof_case_value_name(field.name)
+          case_value = oneof_field_case_name(msg, field)
 
           io << "#{indent}def #{fname}=(value : #{field_type}) : #{field_type}\n"
           if field_type.ends_with?("?")
@@ -148,7 +165,7 @@ module Proto
       end
 
       private def tracked_presence_field?(field : Bootstrap::FieldDescriptorProto) : Bool
-        return false unless @file.syntax == "proto2"
+        return false unless @file.effective_syntax == "proto2"
         return false if field.label == Bootstrap::FieldLabel::LABEL_REPEATED
         return false if field.oneof_index
         case field.type
@@ -211,7 +228,7 @@ module Proto
       end
 
       private def required_validation_condition(field : Bootstrap::FieldDescriptorProto) : String?
-        return unless @file.syntax == "proto2"
+        return unless @file.effective_syntax == "proto2"
         return unless field.label == Bootstrap::FieldLabel::LABEL_REQUIRED
         return if field.label == Bootstrap::FieldLabel::LABEL_REPEATED
 

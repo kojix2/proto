@@ -57,7 +57,7 @@ describe Proto::Generator::FileGenerator do
 
       code.should contain("reader.expect_wire_type!(1, wt, Proto::WireType::VARINT)")
       code.should contain("msg.child = reader.read_embedded(2, wt) do |sub|")
-      code.should contain("Wireguard::Child.decode_partial(merged)")
+      code.should contain("Wireguard::Child.decode_partial(sub.rewrap(merged.to_slice))")
       code.should contain("if reader.packed_wire_type?(3, wt, Proto::WireType::VARINT)")
       code.should contain("reader.expect_wire_type!(4, wt, Proto::WireType::VARINT)")
     end

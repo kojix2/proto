@@ -84,7 +84,7 @@ describe Proto::Generator::FileGenerator do
       code.should contain("def validate_required_deep! : Nil")
       code.should contain("raise Proto::RequiredFieldError.new(\"Missing required field: child\") unless has_child?")
       code.should contain("msg.child = reader.read_embedded(1, wt) do |sub|")
-      code.should contain("Req::Child.decode_partial(merged)")
+      code.should contain("Req::Child.decode_partial(sub.rewrap(merged.to_slice))")
       code.should contain("child.try &.validate_required_deep!")
       code.should contain("if _v = child")
       code.should contain("w.write_embedded(1) { |sub| _v.encode_partial(sub) }")

@@ -1,0 +1,3 @@
+syntax = "proto2";
+package audit_imported;
+enum Stage { FIRST = 11; SECOND = 12; }

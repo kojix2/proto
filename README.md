@@ -47,7 +47,16 @@ raise `Proto::RequiredFieldError` when a required value is missing. Use
 Presence is exposed through generated `has_*?` and `clear_*` methods.
 
 Wire readers default to 64 MiB per message and 8 MiB per length-delimited field.
-Malformed lengths and field numbers raise `Proto::DecodeError`.
+Nested messages and unknown groups share a default limit of 100 levels;
+direct readers can set `max_recursion_depth:`. Malformed lengths, field numbers
+and excessive nesting raise `Proto::DecodeError`. Proto3 strings are validated
+as UTF-8 during encode and decode; bytes and proto2 strings preserve their bytes.
+
+Regenerate existing `.pb.cr` files to apply generator fixes, including proto2
+presence/defaults, wrong-wire-type unknown fields and nesting checks through
+merged messages. Fields that conflict with message/runtime methods are escaped
+(for example `encode` becomes `encode_`); oneof case names avoid the `NONE`
+sentinel. The original protobuf field numbers remain unchanged.
 
 ## Development
 

@@ -17,26 +17,26 @@ module Packed
       reader = Proto::Wire::Reader.new(io)
       while tag = reader.read_tag
         fn, wt = tag
-        case fn
-        when 1
+        case {fn, wt}
+        when {1, Proto::WireType::VARINT}, {1, Proto::WireType::LENGTH_DELIMITED}
           if reader.packed_wire_type?(1, wt, Proto::WireType::VARINT)
-            reader.read_packed_varint { |v| msg.values << v.to_i32! }
+            reader.read_packed_varint { |v| msg.values << Proto::Wire::Reader.int32_from_varint(v) }
           else
             msg.values << reader.read_int32
           end
-        when 2
+        when {2, Proto::WireType::FIXED64}, {2, Proto::WireType::LENGTH_DELIMITED}
           if reader.packed_wire_type?(2, wt, Proto::WireType::FIXED64)
             reader.read_packed_double { |v| msg.scores << v }
           else
             msg.scores << reader.read_double
           end
-        when 3
+        when {3, Proto::WireType::VARINT}, {3, Proto::WireType::LENGTH_DELIMITED}
           if reader.packed_wire_type?(3, wt, Proto::WireType::VARINT)
             reader.read_packed_varint { |v| msg.flags << v != 0_u64 }
           else
             msg.flags << reader.read_bool
           end
-        when 4
+        when {4, Proto::WireType::FIXED32}, {4, Proto::WireType::LENGTH_DELIMITED}
           if reader.packed_wire_type?(4, wt, Proto::WireType::FIXED32)
             reader.read_packed_fixed32 { |v| msg.ids << v }
           else

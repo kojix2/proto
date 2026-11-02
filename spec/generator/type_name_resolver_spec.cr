@@ -52,7 +52,7 @@ describe Proto::Generator::TypeNameResolver do
     code = Proto::Generator::FileGenerator.new(file, index, resolver).generate
     code.should contain("property payload : Custom::Empty? = nil")
     code.should contain("msg.payload = reader.read_embedded(1, wt) do |sub|")
-    code.should contain("Custom::Empty.decode_partial(merged)")
+    code.should contain("Custom::Empty.decode_partial(sub.rewrap(merged.to_slice))")
   end
 
   it "ignores unrelated parameters and surrounding whitespace while parsing type_map" do

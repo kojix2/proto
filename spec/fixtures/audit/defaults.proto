@@ -1,0 +1,20 @@
+syntax = "proto2";
+package audit_defaults;
+import "imported.proto";
+enum Stage { FIRST = 7; SECOND = 8; }
+enum State { ready = 1; waiting = 2; }
+message Config {
+  required int32 id = 1;
+  optional bool enabled = 2 [default = true];
+  optional bytes blob = 3 [default = "\000\001A\377\"\\\n\x7f"];
+  optional Stage stage = 4;
+  optional State state = 5 [default = ready];
+  optional audit_imported.Stage imported_stage = 6;
+  optional Holder.NestedStage nested_stage = 7;
+  optional string text = 8;
+}
+message Holder { enum NestedStage { FIRST = 13; SECOND = 14; } }
+message Base { extensions 100 to 200; }
+message FirstScope { extend Base { optional int32 data = 100; } }
+message SecondScope { extend Base { optional int32 data = 101; } }
+extend Base { optional int32 data_2 = 102; optional int32 all = 103; }

@@ -1,23 +1,50 @@
 module Proto
   module Wire
+    # Reader copies share the byte counter for their shared IO.
+    private class ReadBudget
+      property bytes_read = 0_i64
+    end
+
+    # Preserve nesting policy when generated/bootstrap decoders open child IOs.
+    class EmbeddedIO < IO::Memory
+      getter depth : Int32
+      getter max_recursion_depth : Int32
+
+      def initialize(bytes : Bytes, @depth : Int32, @max_recursion_depth : Int32)
+        super(bytes)
+      end
+
+      def rewrap(bytes : Bytes) : self
+        self.class.new(bytes, depth, max_recursion_depth)
+      end
+    end
+
     # Reader wraps an IO and provides typed protobuf wire-format read primitives.
     #
     # Entry point for message decode loops is `read_tag`, which returns nil on
     # clean EOF (end of message) and raises DecodeError on malformed input.
     # All other read methods raise DecodeError on unexpected EOF.
     struct Reader
-      MAX_FIELD_NUMBER         = 536_870_911
-      DEFAULT_MAX_MESSAGE_SIZE = 64_i64 * 1024 * 1024
-      DEFAULT_MAX_FIELD_LENGTH = 8_i32 * 1024 * 1024
+      MAX_FIELD_NUMBER            = 536_870_911
+      DEFAULT_MAX_MESSAGE_SIZE    = 64_i64 * 1024 * 1024
+      DEFAULT_MAX_FIELD_LENGTH    = 8_i32 * 1024 * 1024
+      DEFAULT_MAX_RECURSION_DEPTH = 100
 
-      @bytes_read : Int64
+      @budget : ReadBudget
+      @depth : Int32
+      @max_recursion_depth : Int32
 
       def initialize(
         @io : IO,
         @max_message_size : Int64 = DEFAULT_MAX_MESSAGE_SIZE,
         @max_field_length : Int32 = DEFAULT_MAX_FIELD_LENGTH,
+        max_recursion_depth : Int32 = DEFAULT_MAX_RECURSION_DEPTH,
       )
-        @bytes_read = 0_i64
+        @budget = ReadBudget.new
+        @depth = io.is_a?(EmbeddedIO) ? io.depth : 0
+        @max_recursion_depth = io.is_a?(EmbeddedIO) ? io.max_recursion_depth : max_recursion_depth
+        raise ArgumentError.new("max_recursion_depth must be nonnegative") if @max_recursion_depth < 0
+        check_depth!
       end
 
       # ---------------------------------------------------------------------------
@@ -167,16 +194,23 @@ module Proto
       end
 
       def read_string : String
+        value = read_string_unchecked
+        raise DecodeError.new("invalid UTF-8 string") unless value.valid_encoding?
+        value
+      end
+
+      def read_string_unchecked : String
         String.new(read_bytes)
       end
 
       # Return a scoped IO::Memory over the next length-delimited field.
       # The bytes are consumed from this reader immediately.
-      def read_embedded : IO::Memory
-        IO::Memory.new(read_bytes)
+      def read_embedded : EmbeddedIO
+        raise DecodeError.new("message exceeds recursion limit") if @depth >= @max_recursion_depth
+        EmbeddedIO.new(read_bytes, @depth + 1, @max_recursion_depth)
       end
 
-      def read_embedded(field_number : Int32, wire_type : Int32, & : IO::Memory -> T) : T forall T
+      def read_embedded(field_number : Int32, wire_type : Int32, & : EmbeddedIO -> T) : T forall T
         expect_wire_type!(field_number, wire_type, WireType::LENGTH_DELIMITED)
         yield read_embedded
       end
@@ -188,7 +222,7 @@ module Proto
       # Decode a packed repeated varint field into the given array.
       # Yields each decoded UInt64 raw value; callers convert as needed.
       def read_packed_varint(& : UInt64 ->) : Nil
-        sub_io = read_embedded
+        sub_io = IO::Memory.new(read_bytes)
         sub = Reader.new(sub_io)
         while sub_io.pos < sub_io.size
           yield sub.read_uint64
@@ -263,7 +297,8 @@ module Proto
         when WireType::FIXED32
           UnknownField.new(field_number, WireType::FIXED32, read_fixed32)
         when WireType::START_GROUP
-          UnknownField.new(field_number, WireType::START_GROUP, read_unknown_group(field_number))
+          fields = read_unknown_group(field_number)
+          UnknownField.new(field_number, WireType::START_GROUP, fields)
         when WireType::END_GROUP
           raise DecodeError.new("unexpected END_GROUP")
         else
@@ -294,6 +329,8 @@ module Proto
         else
           raise DecodeError.new("unknown wire type: #{wire_type}")
         end
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
       end
 
       # ---------------------------------------------------------------------------
@@ -344,21 +381,21 @@ module Proto
         end
         # Reject before allocating, reading or skipping the payload. The length
         # varint has already been charged to this reader's message budget.
-        if @bytes_read + len > @max_message_size
-          raise DecodeError.new("message exceeds max size: #{@bytes_read + len} > #{@max_message_size}")
+        if @budget.bytes_read + len > @max_message_size
+          raise DecodeError.new("message exceeds max size: #{@budget.bytes_read + len} > #{@max_message_size}")
         end
         len
       end
 
       private def consume_bytes!(count : Int64) : Nil
-        @bytes_read += count
-        if @bytes_read > @max_message_size
-          raise DecodeError.new("message exceeds max size: #{@bytes_read} > #{@max_message_size}")
+        @budget.bytes_read += count
+        if @budget.bytes_read > @max_message_size
+          raise DecodeError.new("message exceeds max size: #{@budget.bytes_read} > #{@max_message_size}")
         end
       end
 
       private def read_packed_fixed_values(byte_size : Int32, & : IO::Memory ->) : Nil
-        sub_io = read_embedded
+        sub_io = IO::Memory.new(read_bytes)
         while sub_io.pos < sub_io.size
           remaining = sub_io.size - sub_io.pos
           raise DecodeError.new("unexpected EOF") if remaining < byte_size
@@ -367,6 +404,8 @@ module Proto
       end
 
       private def read_unknown_group(start_field_number : Int32) : Array(UnknownField)
+        @depth += 1
+        check_depth!
         fields = [] of UnknownField
         loop do
           tag = read_tag || raise DecodeError.new("unexpected EOF inside group")
@@ -378,9 +417,13 @@ module Proto
           fields << read_unknown_field(fn, wt)
         end
         fields
+      ensure
+        @depth -= 1
       end
 
       private def skip_group(start_field_number : Int32) : Nil
+        @depth += 1
+        check_depth!
         loop do
           tag = read_tag || raise DecodeError.new("unexpected EOF inside group")
           fn, wt = tag
@@ -390,17 +433,16 @@ module Proto
           end
           skip_tag({fn, wt})
         end
+      ensure
+        @depth -= 1
       end
 
       def self.int32_from_varint(raw : UInt64) : Int32
-        upper = raw >> 32
-        if upper == 0_u64 || upper == 0xFFFF_FFFF_u64
-          raw.to_u32!.unsafe_as(Int32)
-        else
-          raise DecodeError.new("int32 out of range: #{raw}")
-        end
-      rescue OverflowError
-        raise DecodeError.new("int32 out of range: #{raw}")
+        raw.to_u32!.unsafe_as(Int32)
+      end
+
+      private def check_depth! : Nil
+        raise DecodeError.new("message exceeds recursion limit") if @depth > @max_recursion_depth
       end
 
       private def raise_wire_type_mismatch(field_number : Int32, wire_type : Int32, expected : String) : NoReturn

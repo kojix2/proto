@@ -206,3 +206,14 @@ describe "Proto::Bootstrap descriptors" do
     end
   end
 end
+
+describe "bootstrap proto2 strings" do
+  it "preserves non-UTF-8 default-value bytes without applying proto3 string validation" do
+    descriptor = Proto::Bootstrap::FieldDescriptorProto.new
+    descriptor.default_value = String.new(Bytes[255])
+    io = IO::Memory.new
+    descriptor.encode(io)
+    io.rewind
+    Proto::Bootstrap::FieldDescriptorProto.decode(io).default_value.to_slice.should eq(Bytes[255])
+  end
+end

@@ -23,10 +23,10 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when  1 then msg.file_to_generate << reader.read_string
-          when  2 then msg.parameter = reader.read_string
+          when  1 then msg.file_to_generate << reader.read_string_unchecked
+          when  2 then msg.parameter = reader.read_string_unchecked
           when 15 then msg.proto_file << FileDescriptorProto.decode(reader.read_embedded)
-          else         msg.capture_unknown_field(reader, fn, wt)
+          else         msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -34,8 +34,8 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        file_to_generate.each { |file_name| w.write_string_field(1, file_name) }
-        w.write_string_field(2, parameter)
+        file_to_generate.each { |file_name| w.write_string_field_unchecked(1, file_name) }
+        w.write_string_field_unchecked(2, parameter)
         proto_file.each { |file_desc| w.write_embedded(15) { |sub| file_desc.encode(sub) } }
         write_unknown_fields(w)
       end
@@ -63,10 +63,10 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when  1 then msg.name = reader.read_string
-          when  2 then msg.insertion_point = reader.read_string
-          when 15 then msg.content = reader.read_string
-          else         msg.capture_unknown_field(reader, fn, wt)
+          when  1 then msg.name = reader.read_string_unchecked
+          when  2 then msg.insertion_point = reader.read_string_unchecked
+          when 15 then msg.content = reader.read_string_unchecked
+          else         msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -74,9 +74,9 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, name)
-        w.write_string_field(2, insertion_point)
-        w.write_string_field(15, content)
+        w.write_string_field_unchecked(1, name)
+        w.write_string_field_unchecked(2, insertion_point)
+        w.write_string_field_unchecked(15, content)
         write_unknown_fields(w)
       end
     end
@@ -103,10 +103,10 @@ module Proto
         while tag = reader.read_tag
           fn, wt = tag
           case fn
-          when  1 then msg.error = reader.read_string
+          when  1 then msg.error = reader.read_string_unchecked
           when  2 then msg.supported_features = reader.read_uint64
           when 15 then msg.file << CodeGeneratorResponseFile.decode(reader.read_embedded)
-          else         msg.capture_unknown_field(reader, fn, wt)
+          else         msg.capture_unknown_field(reader.read_unknown_field(fn, wt))
           end
         end
         msg
@@ -114,7 +114,7 @@ module Proto
 
       def encode(io : IO) : Nil
         w = Wire::Writer.new(io)
-        w.write_string_field(1, error)
+        w.write_string_field_unchecked(1, error)
         w.write_uint64_field(2, supported_features)
         file.each { |response_file| w.write_embedded(15) { |sub| response_file.encode(sub) } }
         write_unknown_fields(w)

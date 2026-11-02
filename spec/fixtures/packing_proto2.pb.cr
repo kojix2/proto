@@ -15,16 +15,16 @@ module Regressions
       reader = Proto::Wire::Reader.new(io)
       while tag = reader.read_tag
         fn, wt = tag
-        case fn
-        when 1
+        case {fn, wt}
+        when {1, Proto::WireType::VARINT}, {1, Proto::WireType::LENGTH_DELIMITED}
           if reader.packed_wire_type?(1, wt, Proto::WireType::VARINT)
-            reader.read_packed_varint { |v| msg.unpacked << v.to_i32! }
+            reader.read_packed_varint { |v| msg.unpacked << Proto::Wire::Reader.int32_from_varint(v) }
           else
             msg.unpacked << reader.read_int32
           end
-        when 2
+        when {2, Proto::WireType::VARINT}, {2, Proto::WireType::LENGTH_DELIMITED}
           if reader.packed_wire_type?(2, wt, Proto::WireType::VARINT)
-            reader.read_packed_varint { |v| msg.packed << v.to_i32! }
+            reader.read_packed_varint { |v| msg.packed << Proto::Wire::Reader.int32_from_varint(v) }
           else
             msg.packed << reader.read_int32
           end

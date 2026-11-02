@@ -15,11 +15,11 @@ module Regressions
       reader = Proto::Wire::Reader.new(io)
       while tag = reader.read_tag
         fn, wt = tag
-        case fn
-        when 1
+        case {fn, wt}
+        when {1, Proto::WireType::FIXED32}
           reader.expect_wire_type!(1, wt, Proto::WireType::FIXED32)
           msg.ratio = reader.read_float
-        when 2
+        when {2, Proto::WireType::FIXED64}
           reader.expect_wire_type!(2, wt, Proto::WireType::FIXED64)
           msg.gain = reader.read_double
         else

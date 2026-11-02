@@ -17,6 +17,16 @@ Each `*_spec.cr` file loads its own dependencies and can run alone. Do not
 require another spec file for its fixtures. Hand-written messages live in the
 `ProtoSpec` namespace; generated fixtures retain their schema namespaces.
 
+`fixtures/audit/descriptors.pb` is a FileDescriptorSet produced by real protoc
+from the adjacent schemas. It retains protoc's omitted proto2 syntax field,
+and executable generation specs use it without requiring protoc on the runner.
+Regenerate it from the repository root with:
+
+```sh
+protoc -I spec/fixtures/audit --include_imports \
+  --descriptor_set_out=spec/fixtures/audit/descriptors.pb defaults.proto runtime.proto
+```
+
 ## Adding and ordering examples
 
 - Choose the file by the wire operation or message/generator feature. Put
