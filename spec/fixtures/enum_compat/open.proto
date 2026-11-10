@@ -1,0 +1,10 @@
+syntax = "proto3";
+package enum_audit;
+
+enum OpenEnum {
+  option allow_alias = true;
+  OPEN_ZERO = 0;
+  OPEN_ONE = 1;
+  MOO = 2;
+  moo = 2;
+}

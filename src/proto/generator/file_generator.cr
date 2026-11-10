@@ -265,14 +265,21 @@ module Proto
       end
 
       private def emit_enum(io : IO, en : Bootstrap::EnumDescriptorProto, indent : String) : Nil
-        names = Set(String).new
+        names = Hash(String, Int32).new
         en.value.each do |member|
           name = enum_member_name(member.name)
-          raise "enum member collision in #{en.name}: '#{name}'" unless names.add?(name)
+          if number = names[name]?
+            raise "enum member collision in #{en.name}: '#{name}'" unless number == member.number
+          else
+            names[name] = member.number
+          end
         end
         io << "#{indent}enum #{en.name} : Int32\n"
+        emitted = Set(String).new
         en.value.each do |v|
-          io << "#{indent}  #{enum_member_name(v.name)} = #{v.number}\n"
+          name = enum_member_name(v.name)
+          next unless emitted.add?(name)
+          io << "#{indent}  #{name} = #{v.number}\n"
         end
         io << "\n"
         io << "#{indent}  def self.from_raw?(raw : Int32) : self?\n"
@@ -480,6 +487,21 @@ module Proto
       private def emit_map_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, map_entry : Bootstrap::DescriptorProto, fname : String, indent : String) : Nil
         entry_type = resolve_type(field.type_name)
         value_field = map_entry.field.find { |field_desc| field_desc.name == "value" && field_desc.number == 2 }
+        if value_field && value_field.type == Bootstrap::FieldType::TYPE_ENUM && !open_enum_field?(value_field)
+          # A closed enum's unknown value makes the entire map entry unknown.
+          # Capture the original entry bytes, including its key and any fields
+          # the generated entry decoder doesn't understand.
+          io << "#{indent}reader.read_embedded(#{field.number}, wt) do |sub|\n"
+          io << "#{indent}  entry_bytes = sub.to_slice\n"
+          io << "#{indent}  entry = #{entry_type}.decode_partial(sub)\n"
+          io << "#{indent}  if entry.unknown_fields.any? { |unknown| unknown.field_number == 2 && unknown.wire_type == Proto::WireType::VARINT }\n"
+          io << "#{indent}    msg.capture_unknown_field(Proto::UnknownField.new(#{field.number}, Proto::WireType::LENGTH_DELIMITED, entry_bytes.dup))\n"
+          io << "#{indent}  else\n"
+          io << "#{indent}    msg.#{fname}[entry.key] = entry.value\n"
+          io << "#{indent}  end\n"
+          io << "#{indent}end\n"
+          return
+        end
         io << "#{indent}entry = reader.read_embedded(#{field.number}, wt) { |sub| #{entry_type}.decode_partial(sub) }\n"
         if value_field && value_field.type == Bootstrap::FieldType::TYPE_MESSAGE
           value_type = base_crystal_type(value_field)
@@ -1006,13 +1028,14 @@ module Proto
         end
 
         msg.enum_type.each do |enum_desc|
-          enum_seen = Set(String).new
+          enum_seen = Hash(String, Int32).new
           enum_desc.value.each do |value|
             normalized = enum_member_name(value.name)
-            if enum_seen.includes?(normalized)
-              raise "enum member collision in #{msg.name}.#{enum_desc.name}: '#{normalized}'"
+            if number = enum_seen[normalized]?
+              raise "enum member collision in #{msg.name}.#{enum_desc.name}: '#{normalized}'" unless number == value.number
+            else
+              enum_seen[normalized] = value.number
             end
-            enum_seen.add(normalized)
           end
         end
       end
@@ -1113,7 +1136,9 @@ module Proto
       end
 
       private def open_enum_field?(field : Bootstrap::FieldDescriptorProto) : Bool
-        @file.effective_syntax == "proto3" && field.type == Bootstrap::FieldType::TYPE_ENUM
+        return false unless field.type == Bootstrap::FieldType::TYPE_ENUM
+        declaration = @index.resolve(field.type_name)
+        (declaration.try(&.file.effective_syntax) || @file.effective_syntax) == "proto3"
       end
 
       private def open_enum_type_for(field : Bootstrap::FieldDescriptorProto) : String

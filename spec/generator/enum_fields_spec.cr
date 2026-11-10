@@ -146,6 +146,27 @@ describe Proto::Generator::FileGenerator do
 end
 
 describe "top-level enum identifiers" do
+  it "coalesces normalized aliases only when they have the same number" do
+    file = Proto::Bootstrap::FileDescriptorProto.new
+    file.name = "aliases.proto"
+    enum_desc = Proto::Bootstrap::EnumDescriptorProto.new
+    enum_desc.name = "State"
+    {"MOO", "moo"}.each do |name|
+      value = Proto::Bootstrap::EnumValueDescriptorProto.new
+      value.name = name
+      value.number = 2
+      enum_desc.value << value
+    end
+    file.enum_type << enum_desc
+    msg = Proto::Bootstrap::DescriptorProto.new
+    msg.name = "Container"
+    msg.enum_type << enum_desc
+    file.message_type << msg
+
+    code = Proto::Generator::FileGenerator.new(file, Proto::Generator::TypeIndex.new([file])).generate
+    code.scan(/MOO = 2/).size.should eq(2)
+  end
+
   it "diagnoses collisions after enum member normalization" do
     file = Proto::Bootstrap::FileDescriptorProto.new
     file.name = "collision.proto"

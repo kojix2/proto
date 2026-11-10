@@ -1,0 +1,18 @@
+syntax = "proto2";
+package enum_audit;
+import "open.proto";
+
+enum ClosedEnum {
+  CLOSED_ZERO = 0;
+  CLOSED_ONE = 1;
+}
+
+message Container {
+  optional OpenEnum value = 1;
+  repeated OpenEnum values = 2 [packed = true];
+  oneof selection {
+    OpenEnum choice = 3;
+  }
+  map<string, ClosedEnum> closed_values = 4;
+  map<string, OpenEnum> open_values = 5;
+}
