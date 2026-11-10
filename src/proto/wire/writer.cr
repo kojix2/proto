@@ -151,6 +151,20 @@ module Proto
         write_bytes(buf.to_slice)
       end
 
+      # Fixed-width packed fields have a known payload size, so they can be
+      # written directly without buffering the whole packed payload.
+      # The block must write exactly `count` values of the specified `width`;
+      # otherwise the resulting length-delimited field will be malformed.
+      def write_packed_fixed(field_number : Int32, count : Int32, width : Int32, & : Writer ->) : Nil
+        raise ArgumentError.new("invalid fixed-width packed field") unless count >= 0 && width.in?(4, 8)
+        return if count == 0
+        length = count.to_i64 * width
+        validate_field_length!(length)
+        write_tag(field_number, WireType::LENGTH_DELIMITED)
+        write_varint(length.to_u64)
+        yield self
+      end
+
       # ---------------------------------------------------------------------------
       # Convenience field writers (tag + value combined)
       # ---------------------------------------------------------------------------

@@ -3,6 +3,21 @@ require "../support/wire_helpers"
 
 describe "Proto wire format" do
   describe "packed repeated" do
+    it "writes fixed-width packed values directly and checks the length first" do
+      io = IO::Memory.new
+      writer = Proto::Wire::Writer.new(io, max_field_length: 8)
+      writer.write_packed_fixed(1, 2, 4) do |sub|
+        sub.write_fixed32(1_u32)
+        sub.write_fixed32(2_u32)
+      end
+      io.to_slice.should eq(Bytes[10, 8, 1, 0, 0, 0, 2, 0, 0, 0])
+
+      rejected = IO::Memory.new
+      limited = Proto::Wire::Writer.new(rejected, max_field_length: 7)
+      expect_raises(Proto::EncodeError) { limited.write_packed_fixed(1, 2, 4) { |_| } }
+      rejected.size.should eq(0)
+    end
+
     it "roundtrips packed int32 values" do
       values = [1_i32, -2_i32, 300_i32, Int32::MIN, Int32::MAX]
       io = IO::Memory.new

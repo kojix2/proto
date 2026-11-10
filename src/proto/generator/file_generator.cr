@@ -704,8 +704,18 @@ module Proto
           emit_enum_field_encode(io, field, repeated, num, indent)
         elsif repeated && PACKABLE_TYPES.includes?(type) && packed_field?(field)
           writer_method = type == Bootstrap::FieldType::TYPE_STRING && @file.effective_syntax == "proto2" ? "write_string_unchecked" : (SCALAR_WRITER_MAP[type]? || "write_uint64")
-          io << "#{indent}w.write_packed(#{num}) do |buf|\n"
-          io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
+          width = case type
+                  when Bootstrap::FieldType::TYPE_FIXED32, Bootstrap::FieldType::TYPE_SFIXED32, Bootstrap::FieldType::TYPE_FLOAT
+                    4
+                  when Bootstrap::FieldType::TYPE_FIXED64, Bootstrap::FieldType::TYPE_SFIXED64, Bootstrap::FieldType::TYPE_DOUBLE
+                    8
+                  end
+          if width
+            io << "#{indent}w.write_packed_fixed(#{num}, #{fname}.size, #{width}) do |sub|\n"
+          else
+            io << "#{indent}w.write_packed(#{num}) do |buf|\n"
+            io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
+          end
           io << "#{indent}  #{fname}.each { |item| sub.#{writer_method}(item) }\n"
           io << "#{indent}end\n"
         else

@@ -66,16 +66,14 @@ module Packed
         sub = Proto::Wire::Writer.new(buf)
         values.each { |item| sub.write_int32(item) }
       end
-      w.write_packed(2) do |buf|
-        sub = Proto::Wire::Writer.new(buf)
+      w.write_packed_fixed(2, scores.size, 8) do |sub|
         scores.each { |item| sub.write_double(item) }
       end
       w.write_packed(3) do |buf|
         sub = Proto::Wire::Writer.new(buf)
         flags.each { |item| sub.write_bool(item) }
       end
-      w.write_packed(4) do |buf|
-        sub = Proto::Wire::Writer.new(buf)
+      w.write_packed_fixed(4, ids.size, 4) do |sub|
         ids.each { |item| sub.write_fixed32(item) }
       end
       write_unknown_fields(w)

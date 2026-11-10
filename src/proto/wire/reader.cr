@@ -213,7 +213,7 @@ module Proto
       # The bytes are consumed from this reader immediately.
       def read_embedded : EmbeddedIO
         raise DecodeLimitError.new("message exceeds recursion limit") if @depth >= @max_recursion_depth
-        EmbeddedIO.new(read_bytes, @depth + 1, @max_recursion_depth, @max_message_size, @max_field_length)
+        EmbeddedIO.new(read_scoped_bytes, @depth + 1, @max_recursion_depth, @max_message_size, @max_field_length)
       end
 
       def read_embedded(field_number : Int32, wire_type : Int32, & : EmbeddedIO -> T) : T forall T
@@ -228,7 +228,7 @@ module Proto
       # Decode a packed repeated varint field into the given array.
       # Yields each decoded UInt64 raw value; callers convert as needed.
       def read_packed_varint(& : UInt64 ->) : Nil
-        sub_io = IO::Memory.new(read_bytes)
+        sub_io = IO::Memory.new(read_scoped_bytes)
         sub = Reader.new(sub_io, max_message_size: @max_message_size,
           max_field_length: @max_field_length, max_recursion_depth: @max_recursion_depth)
         while sub_io.pos < sub_io.size
@@ -394,6 +394,27 @@ module Proto
         len
       end
 
+      # Nested and packed decoders only borrow these bytes during the call.
+      # Public byte fields and retained unknowns still own their storage.
+      private def read_scoped_bytes : Bytes
+        len = read_length
+        if io = @io.as?(IO::Memory)
+          position = io.pos
+          raise DecodeError.new("unexpected EOF") if position > io.size || len.to_i64 > io.size - position
+          bytes = io.to_slice[position.to_i, len]
+          io.pos = position + len
+          consume_bytes!(len.to_i64)
+          bytes
+        else
+          bytes = Bytes.new(len)
+          @io.read_fully(bytes)
+          consume_bytes!(len.to_i64)
+          bytes
+        end
+      rescue IO::EOFError
+        raise DecodeError.new("unexpected EOF")
+      end
+
       private def consume_bytes!(count : Int64) : Nil
         @budget.bytes_read += count
         if @budget.bytes_read > @max_message_size
@@ -402,7 +423,7 @@ module Proto
       end
 
       private def read_packed_fixed_values(byte_size : Int32, & : IO::Memory ->) : Nil
-        sub_io = IO::Memory.new(read_bytes)
+        sub_io = IO::Memory.new(read_scoped_bytes)
         while sub_io.pos < sub_io.size
           remaining = sub_io.size - sub_io.pos
           raise DecodeError.new("unexpected EOF") if remaining < byte_size
