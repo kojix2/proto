@@ -51,12 +51,30 @@ Nested messages and unknown groups share a default limit of 100 levels;
 direct readers can set `max_recursion_depth:`. Malformed lengths, field numbers
 and excessive nesting raise `Proto::DecodeError`. Proto3 strings are validated
 as UTF-8 during encode and decode; bytes and proto2 strings preserve their bytes.
+Limit violations use the `Proto::DecodeLimitError` and `Proto::EncodeLimitError`
+subclasses, retaining compatibility with handlers for their parent errors.
+
+Newly generated messages also accept explicit options on the Bytes and IO APIs:
+
+```crystal
+write_options = Proto::EncodeOptions.new(max_field_length: 16 * 1024 * 1024)
+read_options = Proto::DecodeOptions.new(max_field_length: 16 * 1024 * 1024,
+  max_message_size: 64_i64 * 1024 * 1024, max_recursion_depth: 100)
+bytes = message.encode(options: write_options)
+copy = Example::Greeting.decode(bytes, options: read_options)
+```
+
+The limits apply to nested messages and map entries as well. The enclosing
+message or map entry has its own length prefix, so allow room for its framing.
+Regenerate `.pb.cr` files with the updated plugin before passing options.
 
 Regenerate existing `.pb.cr` files to apply generator fixes, including proto2
 presence/defaults, wrong-wire-type unknown fields and nesting checks through
 merged messages. Fields that conflict with message/runtime methods are escaped
 (for example `encode` becomes `encode_`); oneof case names avoid the `NONE`
 sentinel. The original protobuf field numbers remain unchanged.
+Proto2 fields that import a proto3 enum now use `Proto::OpenEnum` so unknown
+numeric values survive; regenerate and update affected field assignments.
 
 ## Development
 

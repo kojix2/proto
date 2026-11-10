@@ -27,6 +27,18 @@ protoc -I spec/fixtures/audit --include_imports \
   --descriptor_set_out=spec/fixtures/audit/descriptors.pb defaults.proto runtime.proto
 ```
 
+The enum and limit integration fixtures also use checked-in protoc descriptor
+sets. Regenerate them with:
+
+```sh
+protoc -I spec/fixtures/enum_compat --include_imports \
+  --descriptor_set_out=spec/fixtures/enum_compat/descriptors.pb open.proto consumer.proto
+protoc -I spec/fixtures/enum_compat --include_imports \
+  --descriptor_set_out=spec/fixtures/enum_compat/limits.pb limits.proto
+protoc -I spec/fixtures/enum_compat --include_imports \
+  --descriptor_set_out=spec/fixtures/enum_compat/legacy.pb legacy_parent.proto
+```
+
 ## Adding and ordering examples
 
 - Choose the file by the wire operation or message/generator feature. Put
