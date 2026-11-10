@@ -4,7 +4,8 @@ require "file_utils"
 module ProtoCompilationSpec
   # Compile freshly generated files against this checkout, not an installed or
   # committed fixture. Each example owns its temporary source and executable.
-  def self.run(files : Array(Proto::Bootstrap::FileDescriptorProto), program : String) : String
+  def self.run(files : Array(Proto::Bootstrap::FileDescriptorProto), program : String,
+               *, overrides : Hash(String, String) = {} of String => String) : String
     directory = File.tempname("proto-generated-program-")
     Dir.mkdir(directory)
     index = Proto::Generator::TypeIndex.new(files)
@@ -12,7 +13,7 @@ module ProtoCompilationSpec
       generator = Proto::Generator::FileGenerator.new(file, index)
       output = File.join(directory, generator.output_name)
       FileUtils.mkdir_p(File.dirname(output))
-      File.write(output, generator.generate)
+      File.write(output, overrides[generator.output_name]? || generator.generate)
     end
     source = File.join(directory, "main.cr")
     binary = File.join(directory, "generated-program")

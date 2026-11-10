@@ -2,7 +2,7 @@ module Proto
   module Generator
     module FieldNaming
       RUNTIME_FIELD_NAMES = Set{
-        "unknown_fields", "encode", "encode_partial", "validate_required", "validate_required_deep",
+        "unknown_fields", "encode", "encode_partial", "merge_from_partial", "validate_required", "validate_required_deep",
         "capture_unknown_field", "write_unknown_fields", "add_unknown_varint", "decode_known_enum",
         "has_extension", "extension_value", "extension_values", "initialize", "class",
         "object_id", "hash", "to_s", "inspect", "dup", "clone", "same", "tap", "try",

@@ -1,5 +1,14 @@
 module Proto
   module Wire
+    # Retains the parent's field budget when a generated child creates a writer.
+    class EmbeddedOutput < IO::Memory
+      getter max_field_length : Int32
+
+      def initialize(@max_field_length : Int32)
+        super()
+      end
+    end
+
     # Writer wraps an IO and provides typed protobuf wire-format write primitives.
     #
     # Typical message encode pattern:
@@ -12,6 +21,7 @@ module Proto
       DEFAULT_MAX_FIELD_LENGTH = 8_i32 * 1024 * 1024
 
       def initialize(@io : IO, @max_field_length : Int32 = DEFAULT_MAX_FIELD_LENGTH)
+        @max_field_length = io.max_field_length if io.is_a?(EmbeddedOutput)
       end
 
       # ---------------------------------------------------------------------------
@@ -118,7 +128,7 @@ module Proto
       # Write a length-delimited field by buffering the block's output.
       # Yields the underlying IO::Memory; the accumulated bytes are length-prefixed and written.
       def write_embedded(field_number : Int32, & : IO ->) : Nil
-        buf = IO::Memory.new
+        buf = EmbeddedOutput.new(@max_field_length)
         yield buf
         validate_field_length!(buf.size)
         data = buf.to_slice
@@ -133,7 +143,7 @@ module Proto
       # Write a packed repeated field using the block to write each element into the buffer.
       # Skips writing the field entirely if the array is empty.
       def write_packed(field_number : Int32, & : IO::Memory ->) : Nil
-        buf = IO::Memory.new
+        buf = EmbeddedOutput.new(@max_field_length)
         yield buf
         return if buf.size == 0
         validate_field_length!(buf.size)
@@ -219,7 +229,7 @@ module Proto
 
       private def validate_field_length!(length : Int) : Nil
         if length > @max_field_length
-          raise EncodeError.new("field length exceeds limit: #{length} > #{@max_field_length}")
+          raise EncodeLimitError.new("field length exceeds limit: #{length} > #{@max_field_length}")
         end
       end
     end

@@ -1,0 +1,4 @@
+syntax = "proto3";
+package legacy_audit;
+import "legacy_child.proto";
+message Parent { Child child = 1; }

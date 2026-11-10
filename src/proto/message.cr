@@ -35,9 +35,21 @@ module Proto
       io.to_slice
     end
 
+    def encode(*, options : EncodeOptions) : Bytes
+      io = IO::Memory.new
+      encode(io, options: options)
+      io.to_slice
+    end
+
     def encode_partial : Bytes
       io = IO::Memory.new
       encode_partial(io)
+      io.to_slice
+    end
+
+    def encode_partial(*, options : EncodeOptions) : Bytes
+      io = IO::Memory.new
+      encode_partial(io, options: options)
       io.to_slice
     end
 
@@ -47,8 +59,16 @@ module Proto
         decode(IO::Memory.new(bytes))
       end
 
+      def self.decode(bytes : Bytes, *, options : Proto::DecodeOptions) : self
+        decode(IO::Memory.new(bytes), options: options)
+      end
+
       def self.decode_partial(bytes : Bytes) : self
         decode_partial(IO::Memory.new(bytes))
+      end
+
+      def self.decode_partial(bytes : Bytes, *, options : Proto::DecodeOptions) : self
+        decode_partial(IO::Memory.new(bytes), options: options)
       end
     end
   end

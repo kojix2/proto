@@ -2,6 +2,24 @@ require "../spec_helper"
 
 describe Proto::Generator::FileGenerator do
   describe "field names" do
+    it "escapes a field that conflicts with the generated merge method" do
+      file = Proto::Bootstrap::FileDescriptorProto.new
+      file.name = "merge_name.proto"
+      file.syntax = "proto3"
+      message = Proto::Bootstrap::DescriptorProto.new
+      message.name = "Item"
+      field = Proto::Bootstrap::FieldDescriptorProto.new
+      field.name = "merge_from_partial"
+      field.number = 1
+      field.label = Proto::Bootstrap::FieldLabel::LABEL_OPTIONAL
+      field.type = Proto::Bootstrap::FieldType::TYPE_INT32
+      message.field << field
+      file.message_type << message
+      code = Proto::Generator::FileGenerator.new(file, Proto::Generator::TypeIndex.new([file])).generate
+      code.should contain("property merge_from_partial_ : Int32")
+      code.should contain("def merge_from_partial(io : IO")
+    end
+
     it "normalizes uppercase and camelCase field names to valid Crystal identifiers" do
       file = Proto::Bootstrap::FileDescriptorProto.new
       file.name = "timing.proto"

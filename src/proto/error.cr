@@ -5,7 +5,13 @@ module Proto
   class DecodeError < Error
   end
 
+  class DecodeLimitError < DecodeError
+  end
+
   class EncodeError < Error
+  end
+
+  class EncodeLimitError < EncodeError
   end
 
   class ValidationError < Error

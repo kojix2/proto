@@ -1,5 +1,6 @@
 require "./proto/error"
 require "./proto/wire_type"
+require "./proto/options"
 require "./proto/wire/reader"
 require "./proto/wire/writer"
 require "./proto/unknown_field"

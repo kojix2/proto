@@ -1,0 +1,35 @@
+syntax = "proto3";
+package enum_audit;
+
+message Blob {
+  bytes data = 1;
+}
+
+message Envelope {
+  Blob child = 1;
+  repeated Blob children = 2;
+  map<string, Blob> by_name = 3;
+}
+
+message Node {
+  Node child = 1;
+}
+
+message MergeChild {
+  repeated int32 values = 1;
+  oneof selection {
+    string text = 2;
+    int32 number = 3;
+  }
+}
+
+message MergeParent {
+  MergeChild child = 1;
+}
+
+message OptionNames {
+  Blob options = 1;
+  bytes io = 2;
+  repeated fixed32 sub = 3;
+  repeated int32 buf = 4;
+}

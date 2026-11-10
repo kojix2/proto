@@ -9,13 +9,17 @@ module Proto
     class EmbeddedIO < IO::Memory
       getter depth : Int32
       getter max_recursion_depth : Int32
+      getter max_message_size : Int64
+      getter max_field_length : Int32
 
-      def initialize(bytes : Bytes, @depth : Int32, @max_recursion_depth : Int32)
+      def initialize(bytes : Bytes, @depth : Int32, @max_recursion_depth : Int32,
+                     @max_message_size : Int64 = 64_i64 * 1024 * 1024,
+                     @max_field_length : Int32 = 8_i32 * 1024 * 1024)
         super(bytes)
       end
 
       def rewrap(bytes : Bytes) : self
-        self.class.new(bytes, depth, max_recursion_depth)
+        self.class.new(bytes, depth, max_recursion_depth, max_message_size, max_field_length)
       end
     end
 
@@ -43,6 +47,8 @@ module Proto
         @budget = ReadBudget.new
         @depth = io.is_a?(EmbeddedIO) ? io.depth : 0
         @max_recursion_depth = io.is_a?(EmbeddedIO) ? io.max_recursion_depth : max_recursion_depth
+        @max_message_size = io.max_message_size if io.is_a?(EmbeddedIO)
+        @max_field_length = io.max_field_length if io.is_a?(EmbeddedIO)
         raise ArgumentError.new("max_recursion_depth must be nonnegative") if @max_recursion_depth < 0
         check_depth!
       end
@@ -206,8 +212,8 @@ module Proto
       # Return a scoped IO::Memory over the next length-delimited field.
       # The bytes are consumed from this reader immediately.
       def read_embedded : EmbeddedIO
-        raise DecodeError.new("message exceeds recursion limit") if @depth >= @max_recursion_depth
-        EmbeddedIO.new(read_bytes, @depth + 1, @max_recursion_depth)
+        raise DecodeLimitError.new("message exceeds recursion limit") if @depth >= @max_recursion_depth
+        EmbeddedIO.new(read_bytes, @depth + 1, @max_recursion_depth, @max_message_size, @max_field_length)
       end
 
       def read_embedded(field_number : Int32, wire_type : Int32, & : EmbeddedIO -> T) : T forall T
@@ -223,7 +229,8 @@ module Proto
       # Yields each decoded UInt64 raw value; callers convert as needed.
       def read_packed_varint(& : UInt64 ->) : Nil
         sub_io = IO::Memory.new(read_bytes)
-        sub = Reader.new(sub_io)
+        sub = Reader.new(sub_io, max_message_size: @max_message_size,
+          max_field_length: @max_field_length, max_recursion_depth: @max_recursion_depth)
         while sub_io.pos < sub_io.size
           yield sub.read_uint64
         end
@@ -377,12 +384,12 @@ module Proto
         end
         len = len_u64.to_i32
         if len > @max_field_length
-          raise DecodeError.new("field length exceeds limit: #{len} > #{@max_field_length}")
+          raise DecodeLimitError.new("field length exceeds limit: #{len} > #{@max_field_length}")
         end
         # Reject before allocating, reading or skipping the payload. The length
         # varint has already been charged to this reader's message budget.
         if @budget.bytes_read + len > @max_message_size
-          raise DecodeError.new("message exceeds max size: #{@budget.bytes_read + len} > #{@max_message_size}")
+          raise DecodeLimitError.new("message exceeds max size: #{@budget.bytes_read + len} > #{@max_message_size}")
         end
         len
       end
@@ -390,7 +397,7 @@ module Proto
       private def consume_bytes!(count : Int64) : Nil
         @budget.bytes_read += count
         if @budget.bytes_read > @max_message_size
-          raise DecodeError.new("message exceeds max size: #{@budget.bytes_read} > #{@max_message_size}")
+          raise DecodeLimitError.new("message exceeds max size: #{@budget.bytes_read} > #{@max_message_size}")
         end
       end
 
@@ -442,7 +449,7 @@ module Proto
       end
 
       private def check_depth! : Nil
-        raise DecodeError.new("message exceeds recursion limit") if @depth > @max_recursion_depth
+        raise DecodeLimitError.new("message exceeds recursion limit") if @depth > @max_recursion_depth
       end
 
       private def raise_wire_type_mismatch(field_number : Int32, wire_type : Int32, expected : String) : NoReturn

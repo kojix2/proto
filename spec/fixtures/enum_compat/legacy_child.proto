@@ -1,0 +1,3 @@
+syntax = "proto3";
+package legacy_audit;
+message Child { repeated int32 values = 1; }

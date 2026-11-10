@@ -417,12 +417,18 @@ module Proto
       end
 
       private def emit_decode(io : IO, msg : Bootstrap::DescriptorProto, indent : String) : Nil
-        io << "#{indent}def self.decode_partial(io : IO) : self\n"
+        io << "#{indent}def self.decode_partial(io : IO, *, options _proto_options : Proto::DecodeOptions = Proto::DecodeOptions.new) : self\n"
+        io << "#{indent}  msg = new\n"
+        io << "#{indent}  msg.merge_from_partial(io, options: _proto_options)\n"
+        io << "#{indent}  msg\n"
+        io << "#{indent}end\n\n"
+
+        io << "#{indent}def merge_from_partial(io : IO, *, options _proto_options : Proto::DecodeOptions = Proto::DecodeOptions.new) : Nil\n"
         emit_decode_body(io, msg, indent)
         io << "#{indent}end\n\n"
 
-        io << "#{indent}def self.decode(io : IO) : self\n"
-        io << "#{indent}  msg = decode_partial(io)\n"
+        io << "#{indent}def self.decode(io : IO, *, options _proto_options : Proto::DecodeOptions = Proto::DecodeOptions.new) : self\n"
+        io << "#{indent}  msg = decode_partial(io, options: _proto_options)\n"
         if emits_deep_required_validation?(msg)
           io << "#{indent}  msg.validate_required_deep!\n"
         end
@@ -431,8 +437,8 @@ module Proto
       end
 
       private def emit_decode_body(io : IO, msg : Bootstrap::DescriptorProto, indent : String) : Nil
-        io << "#{indent}  msg = new\n"
-        io << "#{indent}  reader = Proto::Wire::Reader.new(io)\n"
+        io << "#{indent}  msg = self\n"
+        io << "#{indent}  reader = Proto::Wire::Reader.new(io, max_message_size: _proto_options.max_message_size, max_field_length: _proto_options.max_field_length, max_recursion_depth: _proto_options.max_recursion_depth)\n"
         io << "#{indent}  while tag = reader.read_tag\n"
         io << "#{indent}    fn, wt = tag\n"
         io << "#{indent}    case {fn, wt}\n"
@@ -452,7 +458,7 @@ module Proto
         io << "#{indent}      msg.capture_unknown_field(reader.read_unknown_field(fn, wt))\n"
         io << "#{indent}    end\n"
         io << "#{indent}  end\n"
-        io << "#{indent}  msg\n"
+        io << "#{indent}  nil\n"
       end
 
       private def emit_field_decode(io : IO, field : Bootstrap::FieldDescriptorProto, msg : Bootstrap::DescriptorProto, indent : String) : Nil
@@ -530,11 +536,16 @@ module Proto
         else
           io << "#{indent}msg.#{fname} = reader.read_embedded(#{field.number}, wt) do |sub|\n"
           io << "#{indent}  if current = msg.#{fname}\n"
-          io << "#{indent}    merged = IO::Memory.new\n"
-          io << "#{indent}    current.encode_partial(merged)\n"
-          io << "#{indent}    IO.copy(sub, merged)\n"
-          io << "#{indent}    merged.rewind\n"
-          io << "#{indent}    #{crystal_type}.decode_partial(sub.rewrap(merged.to_slice))\n"
+          io << "#{indent}    if current.responds_to?(:merge_from_partial)\n"
+          io << "#{indent}      current.merge_from_partial(sub)\n"
+          io << "#{indent}      current\n"
+          io << "#{indent}    else\n"
+          io << "#{indent}      merged = Proto::Wire::EmbeddedOutput.new(sub.max_field_length)\n"
+          io << "#{indent}      current.encode_partial(merged)\n"
+          io << "#{indent}      IO.copy(sub, merged)\n"
+          io << "#{indent}      merged.rewind\n"
+          io << "#{indent}      #{crystal_type}.decode_partial(sub.rewrap(merged.to_slice))\n"
+          io << "#{indent}    end\n"
           io << "#{indent}  else\n"
           io << "#{indent}    #{crystal_type}.decode_partial(sub)\n"
           io << "#{indent}  end\n"
@@ -612,20 +623,20 @@ module Proto
       end
 
       private def emit_encode(io : IO, msg : Bootstrap::DescriptorProto, indent : String) : Nil
-        io << "#{indent}def encode_partial(io : IO) : Nil\n"
+        io << "#{indent}def encode_partial(io : IO, *, options _proto_options : Proto::EncodeOptions = Proto::EncodeOptions.new) : Nil\n"
         emit_encode_body(io, msg, indent)
         io << "#{indent}end\n\n"
 
-        io << "#{indent}def encode(io : IO) : Nil\n"
+        io << "#{indent}def encode(io : IO, *, options _proto_options : Proto::EncodeOptions = Proto::EncodeOptions.new) : Nil\n"
         if emits_deep_required_validation?(msg)
           io << "#{indent}  validate_required_deep!\n"
         end
-        io << "#{indent}  encode_partial(io)\n"
+        io << "#{indent}  encode_partial(io, options: _proto_options)\n"
         io << "#{indent}end\n"
       end
 
       private def emit_encode_body(io : IO, msg : Bootstrap::DescriptorProto, indent : String) : Nil
-        io << "#{indent}  w = Proto::Wire::Writer.new(io)\n"
+        io << "#{indent}  w = Proto::Wire::Writer.new(io, max_field_length: _proto_options.max_field_length)\n"
 
         msg.field.each do |field_desc|
           emit_field_encode(io, field_desc, msg, indent + "  ")
@@ -663,7 +674,7 @@ module Proto
       end
 
       private def emit_regular_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto, indent : String) : Nil
-        fname = field_identifier(field)
+        fname = encode_field_reference(field)
         repeated = field.label == Bootstrap::FieldLabel::LABEL_REPEATED
         type = field.type
         num = field.number
@@ -703,7 +714,7 @@ module Proto
       end
 
       private def emit_enum_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto, repeated : Bool, num : Int32, indent : String) : Nil
-        fname = field_identifier(field)
+        fname = encode_field_reference(field)
         if repeated && packed_field?(field)
           io << "#{indent}w.write_packed(#{num}) do |buf|\n"
           io << "#{indent}  sub = Proto::Wire::Writer.new(buf)\n"
@@ -1080,7 +1091,7 @@ module Proto
       end
 
       private def emit_proto3_optional_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto, indent : String) : Nil
-        fname = field_identifier(field)
+        fname = encode_field_reference(field)
         type = field.type
         num = field.number
         io << "#{indent}unless (_v = #{fname}).nil?\n"
@@ -1106,7 +1117,7 @@ module Proto
 
       private def emit_scalar_field_encode(io : IO, field : Bootstrap::FieldDescriptorProto,
                                            repeated : Bool, num : Int32, indent : String) : Nil
-        fname = field_identifier(field)
+        fname = encode_field_reference(field)
         writer_method = field.type == Bootstrap::FieldType::TYPE_STRING && @file.effective_syntax == "proto2" ? "write_string_unchecked" : (SCALAR_WRITER_MAP[field.type]? || "write_uint64")
         wire_const = SCALAR_WIRE_TYPE_MAP[field.type]? || "Proto::WireType::VARINT"
 
@@ -1133,6 +1144,11 @@ module Proto
           io << "#{indent}w.write_tag(#{num}, #{wire_const})\n"
           io << "#{indent}w.#{writer_method}(#{fname})\n"
         end
+      end
+
+      private def encode_field_reference(field : Bootstrap::FieldDescriptorProto) : String
+        name = field_identifier(field)
+        name.in?("io", "options", "w", "sub", "buf", "item", "entry", "k", "v") ? "self.#{name}" : name
       end
 
       private def open_enum_field?(field : Bootstrap::FieldDescriptorProto) : Bool
