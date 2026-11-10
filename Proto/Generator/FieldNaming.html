@@ -157,8 +157,28 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/DecodeLimitError" data-name="proto::decodelimiterror">
+      <a href="../../Proto/DecodeLimitError.html">DecodeLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/DecodeOptions" data-name="proto::decodeoptions">
+      <a href="../../Proto/DecodeOptions.html">DecodeOptions</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/EncodeError" data-name="proto::encodeerror">
       <a href="../../Proto/EncodeError.html">EncodeError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/EncodeLimitError" data-name="proto::encodelimiterror">
+      <a href="../../Proto/EncodeLimitError.html">EncodeLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/EncodeOptions" data-name="proto::encodeoptions">
+      <a href="../../Proto/EncodeOptions.html">EncodeOptions</a>
       
     </li>
   
@@ -287,6 +307,11 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/Wire/EmbeddedOutput" data-name="proto::wire::embeddedoutput">
+      <a href="../../Proto/Wire/EmbeddedOutput.html">EmbeddedOutput</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/Wire/Reader" data-name="proto::wire::reader">
       <a href="../../Proto/Wire/Reader.html">Reader</a>
       
@@ -370,7 +395,7 @@
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/generator/field_naming.cr#L3" target="_blank">
+      <a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/generator/field_naming.cr#L3" target="_blank">
         proto/generator/field_naming.cr
       </a>
     
@@ -392,7 +417,7 @@
   <dl>
     
       <dt class="entry-const" id="RUNTIME_FIELD_NAMES">
-        <strong>RUNTIME_FIELD_NAMES</strong> = <code><span class="t">Set</span> {<span class="s">&quot;unknown_fields&quot;</span>, <span class="s">&quot;encode&quot;</span>, <span class="s">&quot;encode_partial&quot;</span>, <span class="s">&quot;validate_required&quot;</span>, <span class="s">&quot;validate_required_deep&quot;</span>, <span class="s">&quot;capture_unknown_field&quot;</span>, <span class="s">&quot;write_unknown_fields&quot;</span>, <span class="s">&quot;add_unknown_varint&quot;</span>, <span class="s">&quot;decode_known_enum&quot;</span>, <span class="s">&quot;has_extension&quot;</span>, <span class="s">&quot;extension_value&quot;</span>, <span class="s">&quot;extension_values&quot;</span>, <span class="s">&quot;initialize&quot;</span>, <span class="s">&quot;class&quot;</span>, <span class="s">&quot;object_id&quot;</span>, <span class="s">&quot;hash&quot;</span>, <span class="s">&quot;to_s&quot;</span>, <span class="s">&quot;inspect&quot;</span>, <span class="s">&quot;dup&quot;</span>, <span class="s">&quot;clone&quot;</span>, <span class="s">&quot;same&quot;</span>, <span class="s">&quot;tap&quot;</span>, <span class="s">&quot;try&quot;</span>, <span class="s">&quot;itself&quot;</span>, <span class="s">&quot;is_a&quot;</span>, <span class="s">&quot;nil&quot;</span>, <span class="s">&quot;responds_to&quot;</span>, <span class="s">&quot;packable_extension_type&quot;</span>, <span class="s">&quot;decode_packed_extension_values&quot;</span>, <span class="s">&quot;write_unknown_group_fields&quot;</span>, <span class="s">&quot;extension_wire_type_for&quot;</span>, <span class="s">&quot;decode_extension_value&quot;</span>, <span class="s">&quot;decode_varint_extension&quot;</span>, <span class="s">&quot;decode_fixed64_extension&quot;</span>, <span class="s">&quot;decode_fixed32_extension&quot;</span>, <span class="s">&quot;decode_length_delimited_extension&quot;</span>, <span class="s">&quot;decode_varint&quot;</span>, <span class="s">&quot;decode_fixed64&quot;</span>, <span class="s">&quot;decode_fixed32&quot;</span>, <span class="s">&quot;decode_bytes&quot;</span>, <span class="s">&quot;unpack_float64&quot;</span>, <span class="s">&quot;unpack_float32&quot;</span>}</code>
+        <strong>RUNTIME_FIELD_NAMES</strong> = <code><span class="t">Set</span> {<span class="s">&quot;unknown_fields&quot;</span>, <span class="s">&quot;encode&quot;</span>, <span class="s">&quot;encode_partial&quot;</span>, <span class="s">&quot;merge_from_partial&quot;</span>, <span class="s">&quot;validate_required&quot;</span>, <span class="s">&quot;validate_required_deep&quot;</span>, <span class="s">&quot;capture_unknown_field&quot;</span>, <span class="s">&quot;write_unknown_fields&quot;</span>, <span class="s">&quot;add_unknown_varint&quot;</span>, <span class="s">&quot;decode_known_enum&quot;</span>, <span class="s">&quot;has_extension&quot;</span>, <span class="s">&quot;extension_value&quot;</span>, <span class="s">&quot;extension_values&quot;</span>, <span class="s">&quot;initialize&quot;</span>, <span class="s">&quot;class&quot;</span>, <span class="s">&quot;object_id&quot;</span>, <span class="s">&quot;hash&quot;</span>, <span class="s">&quot;to_s&quot;</span>, <span class="s">&quot;inspect&quot;</span>, <span class="s">&quot;dup&quot;</span>, <span class="s">&quot;clone&quot;</span>, <span class="s">&quot;same&quot;</span>, <span class="s">&quot;tap&quot;</span>, <span class="s">&quot;try&quot;</span>, <span class="s">&quot;itself&quot;</span>, <span class="s">&quot;is_a&quot;</span>, <span class="s">&quot;nil&quot;</span>, <span class="s">&quot;responds_to&quot;</span>, <span class="s">&quot;packable_extension_type&quot;</span>, <span class="s">&quot;decode_packed_extension_values&quot;</span>, <span class="s">&quot;write_unknown_group_fields&quot;</span>, <span class="s">&quot;extension_wire_type_for&quot;</span>, <span class="s">&quot;decode_extension_value&quot;</span>, <span class="s">&quot;decode_varint_extension&quot;</span>, <span class="s">&quot;decode_fixed64_extension&quot;</span>, <span class="s">&quot;decode_fixed32_extension&quot;</span>, <span class="s">&quot;decode_length_delimited_extension&quot;</span>, <span class="s">&quot;decode_varint&quot;</span>, <span class="s">&quot;decode_fixed64&quot;</span>, <span class="s">&quot;decode_fixed32&quot;</span>, <span class="s">&quot;decode_bytes&quot;</span>, <span class="s">&quot;unpack_float64&quot;</span>, <span class="s">&quot;unpack_float32&quot;</span>}</code>
       </dt>
       
     

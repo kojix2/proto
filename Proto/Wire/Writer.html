@@ -157,8 +157,28 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/DecodeLimitError" data-name="proto::decodelimiterror">
+      <a href="../../Proto/DecodeLimitError.html">DecodeLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/DecodeOptions" data-name="proto::decodeoptions">
+      <a href="../../Proto/DecodeOptions.html">DecodeOptions</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/EncodeError" data-name="proto::encodeerror">
       <a href="../../Proto/EncodeError.html">EncodeError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/EncodeLimitError" data-name="proto::encodelimiterror">
+      <a href="../../Proto/EncodeLimitError.html">EncodeLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/EncodeOptions" data-name="proto::encodeoptions">
+      <a href="../../Proto/EncodeOptions.html">EncodeOptions</a>
       
     </li>
   
@@ -287,6 +307,11 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/Wire/EmbeddedOutput" data-name="proto::wire::embeddedoutput">
+      <a href="../../Proto/Wire/EmbeddedOutput.html">EmbeddedOutput</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/Wire/Reader" data-name="proto::wire::reader">
       <a href="../../Proto/Wire/Reader.html">Reader</a>
       
@@ -374,7 +399,7 @@ then writes the length prefix followed by the bytes.</p>
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L11" target="_blank">
+      <a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L20" target="_blank">
         proto/wire/writer.cr
       </a>
     
@@ -512,6 +537,13 @@ then writes the length prefix followed by the bytes.</p>
         <a href="#write_packed%28field_number%3AInt32%2C%26%3AIO%3A%3AMemory-%3E%29%3ANil-instance-method" class="signature"><strong>#write_packed</strong>(field_number : Int32, & : IO::Memory -> ) : Nil</a>
         
           <div class="summary"><p>Write a packed repeated field using the block to write each element into the buffer.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write_packed_fixed%28field_number%3AInt32%2Ccount%3AInt32%2Cwidth%3AInt32%2C%26%3AWriter-%3E%29%3ANil-instance-method" class="signature"><strong>#write_packed_fixed</strong>(field_number : Int32, count : Int32, width : Int32, & : Writer -> ) : Nil</a>
+        
+          <div class="summary"><p>Fixed-width packed fields have a known payload size, so they can be written directly without buffering the whole packed payload.</p></div>
         
       </li>
     
@@ -661,7 +693,7 @@ then writes the length prefix followed by the bytes.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L23" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -693,7 +725,7 @@ then writes the length prefix followed by the bytes.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L67" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L77" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -714,7 +746,7 @@ then writes the length prefix followed by the bytes.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L181" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -730,7 +762,7 @@ then writes the length prefix followed by the bytes.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L103" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L113" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -751,7 +783,7 @@ then writes the length prefix followed by the bytes.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L160" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L184" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -767,7 +799,7 @@ then writes the length prefix followed by the bytes.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L105" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -789,7 +821,7 @@ Yields the underlying IO::Memory; the accumulated bytes are length-prefixed and 
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L120" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L130" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -805,7 +837,7 @@ Yields the underlying IO::Memory; the accumulated bytes are length-prefixed and 
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L75" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L85" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -821,7 +853,7 @@ Yields the underlying IO::Memory; the accumulated bytes are length-prefixed and 
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L83" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L93" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -837,7 +869,7 @@ Yields the underlying IO::Memory; the accumulated bytes are length-prefixed and 
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L91" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L101" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -858,7 +890,7 @@ Yields the underlying IO::Memory; the accumulated bytes are length-prefixed and 
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L48" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -879,7 +911,7 @@ Yields the underlying IO::Memory; the accumulated bytes are length-prefixed and 
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L167" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L191" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -895,7 +927,7 @@ Yields the underlying IO::Memory; the accumulated bytes are length-prefixed and 
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L42" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L52" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -917,7 +949,31 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L135" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L145" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="write_packed_fixed(field_number:Int32,count:Int32,width:Int32,&amp;:Writer-&gt;):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>write_packed_fixed</strong>(field_number : Int32, count : Int32, width : Int32, & : <a href="../../Proto/Wire/Writer.html">Writer</a> -> ) : Nil
+
+        <a class="method-permalink" href="#write_packed_fixed%28field_number%3AInt32%2Ccount%3AInt32%2Cwidth%3AInt32%2C%26%3AWriter-%3E%29%3ANil-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Fixed-width packed fields have a known payload size, so they can be
+written directly without buffering the whole packed payload.
+The block must write exactly <code>count</code> values of the specified <code>width</code>;
+otherwise the resulting length-delimited field will be malformed.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L158" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -933,7 +989,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L89" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -949,7 +1005,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L87" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L97" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -970,7 +1026,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -986,7 +1042,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L71" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1002,7 +1058,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L109" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L119" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1023,7 +1079,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L149" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L173" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1039,7 +1095,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L179" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1055,7 +1111,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L114" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L124" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1071,7 +1127,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L21" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1087,7 +1143,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1103,7 +1159,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L50" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L60" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1124,7 +1180,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L174" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L198" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1145,7 +1201,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L27" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L37" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1161,7 +1217,7 @@ Skips writing the field entirely if the array is empty.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/writer.cr#L189" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/writer.cr#L213" target="_blank">View source</a>]
         
       </div>
     </div>

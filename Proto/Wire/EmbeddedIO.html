@@ -157,8 +157,28 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/DecodeLimitError" data-name="proto::decodelimiterror">
+      <a href="../../Proto/DecodeLimitError.html">DecodeLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/DecodeOptions" data-name="proto::decodeoptions">
+      <a href="../../Proto/DecodeOptions.html">DecodeOptions</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/EncodeError" data-name="proto::encodeerror">
       <a href="../../Proto/EncodeError.html">EncodeError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/EncodeLimitError" data-name="proto::encodelimiterror">
+      <a href="../../Proto/EncodeLimitError.html">EncodeLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/EncodeOptions" data-name="proto::encodeoptions">
+      <a href="../../Proto/EncodeOptions.html">EncodeOptions</a>
       
     </li>
   
@@ -287,6 +307,11 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/Wire/EmbeddedOutput" data-name="proto::wire::embeddedoutput">
+      <a href="../../Proto/Wire/EmbeddedOutput.html">EmbeddedOutput</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/Wire/Reader" data-name="proto::wire::reader">
       <a href="../../Proto/Wire/Reader.html">Reader</a>
       
@@ -369,7 +394,7 @@
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/reader.cr#L9" target="_blank">
+      <a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/reader.cr#L9" target="_blank">
         proto/wire/reader.cr
       </a>
     
@@ -392,7 +417,7 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28bytes%3ABytes%2Cdepth%3AInt32%2Cmax_recursion_depth%3AInt32%29-class-method" class="signature"><strong>.new</strong>(bytes : Bytes, depth : Int32, max_recursion_depth : Int32)</a>
+        <a href="#new%28bytes%3ABytes%2Cdepth%3AInt32%2Cmax_recursion_depth%3AInt32%2Cmax_message_size%3AInt64%3D%2864_i64%2A1024%29%2A1024%2Cmax_field_length%3AInt32%3D%288%2A1024%29%2A1024%29-class-method" class="signature"><strong>.new</strong>(bytes : Bytes, depth : Int32, max_recursion_depth : Int32, max_message_size : Int64 = (<span class="n">64_i64</span> <span class="o">*</span> <span class="n">1024</span>) <span class="o">*</span> <span class="n">1024</span>, max_field_length : Int32 = (<span class="n">8</span> <span class="o">*</span> <span class="n">1024</span>) <span class="o">*</span> <span class="n">1024</span>)</a>
         
       </li>
     
@@ -416,6 +441,16 @@
     
       <li class="entry-summary">
         <a href="#depth%3AInt32-instance-method" class="signature"><strong>#depth</strong> : Int32</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#max_field_length%3AInt32-instance-method" class="signature"><strong>#max_field_length</strong> : Int32</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#max_message_size%3AInt64-instance-method" class="signature"><strong>#max_message_size</strong> : Int64</a>
         
       </li>
     
@@ -499,18 +534,18 @@
     Constructor Detail
   </h2>
   
-    <div class="entry-detail" id="new(bytes:Bytes,depth:Int32,max_recursion_depth:Int32)-class-method">
+    <div class="entry-detail" id="new(bytes:Bytes,depth:Int32,max_recursion_depth:Int32,max_message_size:Int64=(64_i64*1024)*1024,max_field_length:Int32=(8*1024)*1024)-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(bytes : Bytes, depth : Int32, max_recursion_depth : Int32)
+        def self.<strong>new</strong>(bytes : Bytes, depth : Int32, max_recursion_depth : Int32, max_message_size : Int64 = (<span class="n">64_i64</span> <span class="o">*</span> <span class="n">1024</span>) <span class="o">*</span> <span class="n">1024</span>, max_field_length : Int32 = (<span class="n">8</span> <span class="o">*</span> <span class="n">1024</span>) <span class="o">*</span> <span class="n">1024</span>)
 
-        <a class="method-permalink" href="#new%28bytes%3ABytes%2Cdepth%3AInt32%2Cmax_recursion_depth%3AInt32%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28bytes%3ABytes%2Cdepth%3AInt32%2Cmax_recursion_depth%3AInt32%2Cmax_message_size%3AInt64%3D%2864_i64%2A1024%29%2A1024%2Cmax_field_length%3AInt32%3D%288%2A1024%29%2A1024%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/reader.cr#L13" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/reader.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -542,7 +577,39 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/reader.cr#L10" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/reader.cr#L10" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="max_field_length:Int32-instance-method">
+      <div class="signature">
+        
+        def <strong>max_field_length</strong> : Int32
+
+        <a class="method-permalink" href="#max_field_length%3AInt32-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/reader.cr#L13" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="max_message_size:Int64-instance-method">
+      <div class="signature">
+        
+        def <strong>max_message_size</strong> : Int64
+
+        <a class="method-permalink" href="#max_message_size%3AInt64-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/reader.cr#L12" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -558,7 +625,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/reader.cr#L11" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/reader.cr#L11" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -574,7 +641,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/wire/reader.cr#L17" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/wire/reader.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -157,8 +157,28 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/DecodeLimitError" data-name="proto::decodelimiterror">
+      <a href="../Proto/DecodeLimitError.html">DecodeLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/DecodeOptions" data-name="proto::decodeoptions">
+      <a href="../Proto/DecodeOptions.html">DecodeOptions</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/EncodeError" data-name="proto::encodeerror">
       <a href="../Proto/EncodeError.html">EncodeError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/EncodeLimitError" data-name="proto::encodelimiterror">
+      <a href="../Proto/EncodeLimitError.html">EncodeLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="proto/Proto/EncodeOptions" data-name="proto::encodeoptions">
+      <a href="../Proto/EncodeOptions.html">EncodeOptions</a>
       
     </li>
   
@@ -287,6 +307,11 @@
       
     </li>
   
+  <li class=" " data-id="proto/Proto/Wire/EmbeddedOutput" data-name="proto::wire::embeddedoutput">
+      <a href="../Proto/Wire/EmbeddedOutput.html">EmbeddedOutput</a>
+      
+    </li>
+  
   <li class=" " data-id="proto/Proto/Wire/Reader" data-name="proto::wire::reader">
       <a href="../Proto/Wire/Reader.html">Reader</a>
       
@@ -385,7 +410,7 @@ def self.decode(io : IO) : self</p>
   </h2>
   
     
-      <a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/message.cr#L9" target="_blank">
+      <a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L9" target="_blank">
         proto/message.cr
       </a>
     
@@ -443,12 +468,22 @@ def self.decode(io : IO) : self</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#encode%28%2A%2Coptions%3AEncodeOptions%29%3ABytes-instance-method" class="signature"><strong>#encode</strong>(*, options : EncodeOptions) : Bytes</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#encode_partial%28io%3AIO%29%3ANil-instance-method" class="signature"><strong>#encode_partial</strong>(io : IO) : Nil</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#encode_partial%3ABytes-instance-method" class="signature"><strong>#encode_partial</strong> : Bytes</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode_partial%28%2A%2Coptions%3AEncodeOptions%29%3ABytes-instance-method" class="signature"><strong>#encode_partial</strong>(*, options : EncodeOptions) : Bytes</a>
         
       </li>
     
@@ -550,7 +585,7 @@ def self.decode(io : IO) : self</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/message.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L19" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -580,7 +615,7 @@ def self.decode(io : IO) : self</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/message.cr#L23" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L23" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -601,7 +636,23 @@ def self.decode(io : IO) : self</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/message.cr#L32" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L32" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(*,options:EncodeOptions):Bytes-instance-method">
+      <div class="signature">
+        
+        def <strong>encode</strong>(*, options : <a href="../Proto/EncodeOptions.html">EncodeOptions</a>) : Bytes
+
+        <a class="method-permalink" href="#encode%28%2A%2Coptions%3AEncodeOptions%29%3ABytes-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -617,7 +668,7 @@ def self.decode(io : IO) : self</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/message.cr#L27" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L27" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -633,7 +684,23 @@ def self.decode(io : IO) : self</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/message.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L44" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode_partial(*,options:EncodeOptions):Bytes-instance-method">
+      <div class="signature">
+        
+        def <strong>encode_partial</strong>(*, options : <a href="../Proto/EncodeOptions.html">EncodeOptions</a>) : Bytes
+
+        <a class="method-permalink" href="#encode_partial%28%2A%2Coptions%3AEncodeOptions%29%3ABytes-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L50" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -649,7 +716,7 @@ def self.decode(io : IO) : self</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/message.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L12" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -665,7 +732,7 @@ def self.decode(io : IO) : self</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/proto/blob/931f27162defaab7c8834319c26aade399827c04/src/proto/message.cr#L15" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/proto/blob/2ef39a3eac3c1de534ace734cbf17b41793caedc/src/proto/message.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
